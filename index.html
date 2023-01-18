@@ -10,51 +10,103 @@
       <h1>Measurements</h1>
       <div class="authorship">
         <h2>By Network Strategies Limited</h2>
-        <h5>Copyright &copy; 2023 Network Strategies</h5>
+        <h6>Copyright &copy; 2023 Network Strategies</h6>
       </div>
     </header>
 
     <section class="main">
       <article class="tool tool-1">
         <div class="tool-header">
-          <h3>Tool 1: File Download over HTTP/TCP</h3>
+          <h3>File Download over HTTP/TCP</h3>
           <p class="tool-status">Status: Idle</p>
         </div>
         <div class="tool-body">
-          <div class="button-container">
+          <div class="tool-body-child configure-test">
+            <h5>Configure Test</h5>
+            <div class="configuration-element">
+              <label for="http-remote-endpoint">Remote Endpoint:</label>
+              <input id="http-remote-endpoint" type="text" />
+            </div>
+            <div class="configuration-element">
+              <label for="http-advertised-rate">Advertised Data Rate:</label>
+              <input id="http-advertised-rate" type="text" />
+            </div>
+            <div class="configuration-element">
+              <label for="http-trials-quant">Trials per Test:</label>
+              <input
+                id="http-trials-quant"
+                type="number"
+                min="1"
+                max="100"
+                value="1"
+              />
+            </div>
+            <div class="configuration-element">
+              <label for="http-timeout">Test Timeout (mins):</label>
+              <input id="http-timeout" type="number" min="1" />
+            </div>
+          </div>
+          <div class="tool-body-child button-container">
             <button class="button">Conduct Test</button>
           </div>
-          <div class="number-input-container">
-            <label for="http-trials">Trials per Test:</label>
-            <input id="http-trials" type="number" min="1" max="100" value="1" />
-          </div>
-          <div class="results">
-            <h4>Results: x Trials completed</h4>
+          <div class="tool-body-child results">
+            <h4>Results: x trials completed</h4>
+            <p>Test Started: {local time that test started}</p>
             <p>Total time elapsed: x seconds</p>
-            <p>Average seconds per trial: x</p>
-            <p>Trial success rate: x%</p>
+            <p>Average seconds per successful trial: x</p>
+            <p>Max time: x seconds</p>
+            <p>Min time: x seconds</p>
+            <p>Throughput: x%</p>
+            <p>Unsuccessful file access ratio: x%</p>
+            <div class="csv-export-container button-container">
+              <button class="button">Export to CSV</button>
+            </div>
           </div>
         </div>
       </article>
 
       <article class="tool tool-2">
         <div class="tool-header">
-          <div><h3>Tool 2: ICMP Ping</h3></div>
+          <div><h3>ICMP Ping</h3></div>
           <p class="tool-status">Status: Idle</p>
         </div>
         <div class="tool-body">
-          <div class="button-container">
+          <div class="tool-body-child configure-test">
+            <h5>Configure Test</h5>
+            <div class="configuration-element">
+              <label for="icmp-remote-endpoint">Remote Endpoint:</label>
+              <input id="icmp-remote-endpoint" type="text" />
+            </div>
+            <div class="configuration-element">
+              <label for="icmp-trials-quant">Trials per Test:</label>
+              <input
+                id="icmp-trials-quant"
+                type="number"
+                min="1"
+                max="100"
+                value="1"
+              />
+            </div>
+            <div class="configuration-element">
+              <label for="http-timeout">Test Timeout (mins):</label>
+              <input id="http-timeout" type="number" min="1" />
+            </div>
+          </div>
+
+          <div class="tool-body-child button-container">
             <button class="button">Conduct Test</button>
           </div>
-          <div class="number-input-container">
-            <label for="icmp-trials">Trials per Test:</label>
-            <input id="icmp-trials" type="number" min="1" max="100" value="1" />
-          </div>
-          <div class="results">
-            <h4>Results: x Trials completed</h4>
+          <div class="tool-body-child results">
+            <h4>Results: x trials completed</h4>
+            <p>Test Started: {local time that test started}</p>
             <p>Total time elapsed: x seconds</p>
             <p>Average RTT: x milliseconds</p>
+            <p>Max time: x seconds</p>
+            <p>Min time: x seconds</p>
             <p>Packet Loss Ratio: x%</p>
+            <div class="csv-export-container button-container">
+              <button class="button">Export to CSV</button>
+            </div>
           </div>
         </div>
       </article>
