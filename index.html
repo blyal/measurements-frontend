@@ -15,97 +15,99 @@
     </header>
 
     <section class="main">
-      <article class="tool tool-1">
+      <article class="tool">
         <div class="tool-header">
-          <h3>File Download over HTTP/TCP</h3>
+          <h3>ICMP Ping | File Download over HTTP/TCP</h3>
           <p class="tool-status">Status: Idle</p>
         </div>
         <div class="tool-body">
-          <div class="tool-body-child configure-test">
-            <h5>Configure Test</h5>
-            <div class="configuration-element">
-              <label for="http-remote-endpoint">Remote Endpoint:</label>
-              <input id="http-remote-endpoint" type="text" />
-            </div>
-            <div class="configuration-element">
-              <label for="http-advertised-rate">Advertised Data Rate:</label>
-              <input id="http-advertised-rate" type="text" />
-            </div>
-            <div class="configuration-element">
-              <label for="http-trials-quant">Trials per Test:</label>
-              <input
-                id="http-trials-quant"
-                type="number"
-                min="1"
-                max="100"
-                value="1"
-              />
-            </div>
-            <div class="configuration-element">
-              <label for="http-timeout">Test Timeout (mins):</label>
-              <input id="http-timeout" type="number" min="1" />
+          <div class="tool-body-child">
+            <div class="configure-test">
+              <h5>Configure Tests</h5>
+              <div class="configuration-elements">
+                <div class="configuration-element">
+                  <div class="label-wrapper">
+                    <label for="test-label">Test Label:</label>
+                  </div>
+                  <input id="test-label" type="text" />
+                </div>
+                <div class="configuration-element">
+                  <div class="label-wrapper">
+                    <label for="remote-endpoint">Remote Endpoint:</label>
+                  </div>
+                  <input id="remote-endpoint" type="text" />
+                </div>
+                <div class="configuration-element">
+                  <div class="label-wrapper">
+                    <label for="http-advertised-rate"
+                      >Advertised Data Rate (Mbps):</label
+                    >
+                  </div>
+                  <input id="http-advertised-rate" type="text" />
+                </div>
+                <div class="configuration-element">
+                  <div class="label-wrapper">
+                    <label for="icmp-trials-quant">Trials per ICMP Test:</label>
+                  </div>
+                  <input
+                    id="icmp-trials-quant"
+                    type="number"
+                    min="1"
+                    max="100"
+                    value="1"
+                  />
+                </div>
+                <div class="configuration-element">
+                  <div class="label-wrapper">
+                    <label for="http-trials-quant">Trials per HTTP Test:</label>
+                  </div>
+                  <input
+                    id="http-trials-quant"
+                    type="number"
+                    min="1"
+                    max="100"
+                    value="1"
+                  />
+                </div>
+                <div class="configuration-element">
+                  <div class="label-wrapper">
+                    <label for="tests-timeout">Tests Timeout (mins):</label>
+                  </div>
+                  <input id="tests-timeout" type="number" min="1" />
+                </div>
+              </div>
             </div>
           </div>
           <div class="tool-body-child button-container">
-            <button class="button">Conduct Test</button>
+            <button class="button">Conduct Both Tests</button>
           </div>
-          <div class="tool-body-child results">
-            <h4>Results: x trials completed</h4>
-            <p>Test Started: {local time that test started}</p>
-            <p>Total time elapsed: x seconds</p>
-            <p>Average seconds per successful trial: x</p>
-            <p>Max time: x seconds</p>
-            <p>Min time: x seconds</p>
-            <p>Throughput: x%</p>
-            <p>Unsuccessful file access ratio: x%</p>
+          <div class="tool-body-child">
+            <h4>Results:</h4>
+            <h4>x ICMP trials completed</h4>
+            <h4>y HTTP trials completed</h4>
+            <div class="results">
+              <p>Test Started: {local time that the tests started}</p>
+              <p>Total time elapsed: x seconds</p>
+              <p>Mean RTT (ms): x</p>
+              <p>Min ping trial time (ms): x</p>
+              <p>Max ping trial time (ms): x</p>
+              <p>Packet Loss Ratio: x%</p>
+              <p>Mean time per http trial (s): x</p>
+              <p>Min http trial time (s): x</p>
+              <p>Max http trial time (s): x</p>
+              <p>Throughput: x%</p>
+              <p>Unsuccessful file access ratio: x%</p>
+            </div>
+          </div>
+          <div class="tool-footer">
+            <div>
+              <div class="label-wrapper">
+                <label for="csv-path">CSV File Path:</label>
+              </div>
+              <input id="csv-path" type="text" />
+            </div>
             <div class="csv-export-container button-container">
-              <button class="button">Export to CSV</button>
-            </div>
-          </div>
-        </div>
-      </article>
-
-      <article class="tool tool-2">
-        <div class="tool-header">
-          <div><h3>ICMP Ping</h3></div>
-          <p class="tool-status">Status: Idle</p>
-        </div>
-        <div class="tool-body">
-          <div class="tool-body-child configure-test">
-            <h5>Configure Test</h5>
-            <div class="configuration-element">
-              <label for="icmp-remote-endpoint">Remote Endpoint:</label>
-              <input id="icmp-remote-endpoint" type="text" />
-            </div>
-            <div class="configuration-element">
-              <label for="icmp-trials-quant">Trials per Test:</label>
-              <input
-                id="icmp-trials-quant"
-                type="number"
-                min="1"
-                max="100"
-                value="1"
-              />
-            </div>
-            <div class="configuration-element">
-              <label for="http-timeout">Test Timeout (mins):</label>
-              <input id="http-timeout" type="number" min="1" />
-            </div>
-          </div>
-
-          <div class="tool-body-child button-container">
-            <button class="button">Conduct Test</button>
-          </div>
-          <div class="tool-body-child results">
-            <h4>Results: x trials completed</h4>
-            <p>Test Started: {local time that test started}</p>
-            <p>Total time elapsed: x seconds</p>
-            <p>Average RTT: x milliseconds</p>
-            <p>Max time: x seconds</p>
-            <p>Min time: x seconds</p>
-            <p>Packet Loss Ratio: x%</p>
-            <div class="csv-export-container button-container">
-              <button class="button">Export to CSV</button>
+              <button class="button">Append to CSV</button>
             </div>
           </div>
         </div>

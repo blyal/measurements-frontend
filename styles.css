@@ -29,7 +29,7 @@ h2 {
 h3 {
   color: #ffce31;
   font-size: 22.5px;
-  margin: 0 auto 5px;
+  margin: 0 auto 15px;
 }
 
 h4 {
@@ -64,7 +64,7 @@ p {
   border: 1px solid #e5e5e5;
   border-radius: 5%;
   padding: 20px;
-  width: 40%;
+  width: 80%;
   background-color: #f3f3f3;
 }
 
@@ -83,14 +83,33 @@ p {
 
 .tool-body-child {
   margin: 30px 0;
+  text-align: center;
 }
 
 .configure-test {
+  width: 60%;
+  margin: 0 auto;
+  text-align: left;
+  background-color: #c5c4c4;
+  padding: 15px;
+  border-radius: 10px;
+}
+
+.configure-test h5 {
+  text-align: center;
+}
+
+.configuration-elements {
+  display: flex;
+  flex-direction: column;
 }
 
 .configuration-element {
   line-height: 1.5;
-  padding: 5px;
+  padding: 5px 0;
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  width: 100%;
 }
 
 .button-container {
@@ -120,12 +139,20 @@ p {
 }
 
 .results {
+  width: 50%;
+  margin: 0 auto;
+  text-align: left;
 }
 
 .results p {
   line-height: 1.5;
   padding: 5px;
   font-size: 20px;
+}
+
+.tool-footer {
+  text-align: center;
+  line-height: 1.5;
 }
 
 .csv-export-container {
