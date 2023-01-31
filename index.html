@@ -17,7 +17,7 @@
       <article class="tool">
         <div class="tool-header">
           <h3>ICMP Ping | File Download over HTTP/TCP</h3>
-          <p class="tool-status">Status: Idle</p>
+          <p class="tool-status">Status: <span id="status">Idle</span></p>
         </div>
         <div class="tool-body">
           <div class="tool-body-child">
@@ -26,65 +26,70 @@
               <div class="configuration-elements">
                 <div class="configuration-element">
                   <div class="label-wrapper">
-                    <label for="test-label">Test Label:</label>
+                    <label for="testLabel" class="required">Test Label:</label>
                   </div>
-                  <input id="test-label" type="text" />
+                  <input id="testLabel" type="text" />
                 </div>
                 <div class="configuration-element">
                   <div class="label-wrapper">
-                    <label for="remote-endpoint">Remote Endpoint:</label>
-                  </div>
-                  <input id="remote-endpoint" type="text" />
-                </div>
-                <div class="configuration-element">
-                  <div class="label-wrapper">
-                    <label for="http-advertised-rate"
-                      >Advertised Data Rate (Mbps):</label
+                    <label for="remoteEndpoint" class="required"
+                      >Remote Endpoint:</label
                     >
                   </div>
-                  <input id="http-advertised-rate" type="text" />
+                  <input id="remoteEndpoint" type="text" />
                 </div>
                 <div class="configuration-element">
                   <div class="label-wrapper">
-                    <label for="icmp-trials-quant">Trials per ICMP Test:</label>
+                    <label for="icmpTrialsQuant">Trials per ICMP Test:</label>
                   </div>
                   <input
-                    id="icmp-trials-quant"
+                    id="icmpTrialsQuant"
                     type="number"
-                    min="1"
+                    min="0"
                     max="100"
-                    value="1"
+                    value="100"
                   />
                 </div>
                 <div class="configuration-element">
                   <div class="label-wrapper">
-                    <label for="http-trials-quant">Trials per HTTP Test:</label>
+                    <label for="httpTrialsQuant">Trials per HTTP Test:</label>
                   </div>
                   <input
-                    id="http-trials-quant"
+                    id="httpTrialsQuant"
                     type="number"
-                    min="1"
+                    min="0"
                     max="100"
-                    value="1"
+                    value="100"
                   />
                 </div>
                 <div class="configuration-element">
                   <div class="label-wrapper">
-                    <label for="tests-timeout">Tests Timeout (mins):</label>
+                    <label for="httpAdvertisedRate"
+                      >Advertised Data Rate (kB/s):</label
+                    >
                   </div>
-                  <input id="tests-timeout" type="number" min="1" />
+                  <input id="httpAdvertisedRate" type="number" min="0" />
+                </div>
+                <div class="configuration-element">
+                  <div class="label-wrapper">
+                    <label for="testsTimeout" class="required"
+                      >Overall Time Limit (mins):</label
+                    >
+                  </div>
+                  <input id="testsTimeout" type="number" min="1" value="1" />
                 </div>
               </div>
             </div>
           </div>
           <div class="tool-body-child button-container">
-            <button class="button" id="runTests">Conduct Both Tests</button>
+            <button class="button" id="runTests">Run Tests</button>
           </div>
-          <div class="tool-body-child">
+          <div class="tool-body-child results hidden">
             <h4>Results:</h4>
             <h4>x ICMP trials completed</h4>
-            <h4>y HTTP trials completed</h4>
-            <div class="results">
+            <h4>y HTTP uplink trials completed</h4>
+            <h4>z HTTP downlink trials completed</h4>
+            <div class="results-drilldown">
               <p>Test Started: {local time that the tests started}</p>
               <p>Total time elapsed: x seconds</p>
               <p>Mean RTT (ms): x</p>
@@ -98,7 +103,7 @@
               <p>Unsuccessful file access ratio: x%</p>
             </div>
           </div>
-          <div class="tool-footer">
+          <div class="tool-footer results hidden">
             <div>
               <div class="label-wrapper">
                 <label for="csv-path">CSV File Path:</label>
