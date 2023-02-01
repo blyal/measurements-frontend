@@ -22,6 +22,56 @@ const httpTrialsQuantityInput = document.getElementById('httpTrialsQuant');
 const runTimeoutInput = document.getElementById('testsTimeout');
 const button = document.getElementById('runTests');
 const resultsElements = document.getElementsByClassName('results');
+const elementICMPTrialsCompleted = document.getElementsByClassName(
+  'elementICMPTrialsCompleted'
+);
+const elementHttpUpTrialsCompleted = document.getElementsByClassName(
+  'elementHttpUpTrialsCompleted'
+);
+const elementHttpDownTrialsCompleted = document.getElementsByClassName(
+  'elementHttpDownTrialsCompleted'
+);
+const elementTestStartTime = document.getElementsByClassName(
+  'elementTestStartTime'
+);
+const elementTimeElapsed =
+  document.getElementsByClassName('elementTimeElapsed');
+const elementMeanRTT = document.getElementsByClassName('elementMeanRTT');
+const elementMinRTT = document.getElementsByClassName('elementMinRTT');
+const elementMaxRTT = document.getElementsByClassName('elementMaxRTT');
+const elementPacketLossRatio = document.getElementsByClassName(
+  'elementPacketLossRatio'
+);
+const elementMeanUpHttpTime = document.getElementsByClassName(
+  'elementMeanUpHttpTime'
+);
+const elementMinUpHttpTime = document.getElementsByClassName(
+  'elementMinUpHttpTime'
+);
+const elementMaxUpHttpTime = document.getElementsByClassName(
+  'elementMaxUpHttpTime'
+);
+const elementUpThroughput = document.getElementsByClassName(
+  'elementUpThroughput'
+);
+const elementUpUnsuccessfulFileAccess = document.getElementsByClassName(
+  'elementUpUnsuccessfulFileAccess'
+);
+const elementMeanDownHttpTime = document.getElementsByClassName(
+  'elementMeanDownHttpTime'
+);
+const elementMinDownHttpTime = document.getElementsByClassName(
+  'elementMinDownHttpTime'
+);
+const elementMaxDownHttpTime = document.getElementsByClassName(
+  'elementMaxDownHttpTime'
+);
+const elementDownThroughput = document.getElementsByClassName(
+  'elementDownThroughput'
+);
+const elementDownUnsuccessfulFileAccess = document.getElementsByClassName(
+  'elementDownUnsuccessfulFileAccess'
+);
 
 // State
 let testStatus = 'Idle';
@@ -93,6 +143,7 @@ const runTests = async () => {
   } else {
     // init
     updateTestStatus('Running');
+    const testLocalStartTime = new Date();
 
     // function config
     let isRunning = true;
@@ -109,12 +160,11 @@ const runTests = async () => {
     const results = [];
 
     // data config
-    const testStartTime = new Date().toUTCString();
+    const testUTCStartTime = new Date().toUTCString();
     const testLabel = testLabelInput.value;
 
     // run timeout
     setTimeout(() => {
-      console.log('Stop');
       isRunning = false;
     }, runTimeoutInMs);
 
@@ -124,7 +174,7 @@ const runTests = async () => {
         httpTrialTimeLimitInMs
       );
       const trialData = {
-        testStartTime,
+        testUTCStartTime,
         testLabel,
         trialNumber: i + 1,
         trialResult,
@@ -132,18 +182,111 @@ const runTests = async () => {
       };
       results.push(trialData);
       if (!isRunning) {
-        console.log('Break');
         break;
       }
     }
 
     // handle results
     console.log(results);
+    const testLocalEndTime = new Date();
+    const minutesElapsed = Math.round(
+      (testLocalEndTime - testLocalStartTime) / 60000
+    );
+    const secondsRemainderElapsed =
+      Math.round((testLocalEndTime - testLocalStartTime) / 1000) % 60;
+
+    let testSummary = {
+      testLocalStartTime: testLocalStartTime.toLocaleString(),
+      timeElapsed: timeElapsed(minutesElapsed, secondsRemainderElapsed),
+      icmpTrialsCompleted: 0,
+      //TODO: this has to change. Not all results are upTrials
+      httpUpTrialsCompleted: results.length,
+      httpDownTrialsCompleted: 0,
+      meanRTT: undefined,
+      minRTT: undefined,
+      maxRTT: undefined,
+      packetLossRatio: undefined,
+      meanHttpUpTime: calculateMeanHttpTime(results),
+      minHttpUpTime: results.reduce((prev, curr) =>
+        prev.trialTimeInMs < curr.trialTimeInMs ? prev : curr
+      ).trialTimeInMs,
+      maxHttpUpTime: results.reduce((prev, curr) =>
+        prev.trialTimeInMs > curr.trialTimeInMs ? prev : curr
+      ).trialTimeInMs,
+      uplinkThroughput: undefined,
+      uplinkUnsuccessfulFileAccess: undefined,
+      meanHttpDownTime: undefined,
+      minHttpDownTime: undefined,
+      maxHttpDownTime: undefined,
+      downlinkThroughput: undefined,
+      downlinkUnsuccessfulFileAccess: undefined,
+    };
+    console.log(testSummary);
     updateTestStatus('Completed');
-    resultsElements[0].classList.remove('hidden');
-    resultsElements[1].classList.remove('hidden');
+    updateHTMLAfterTestFinished(testSummary);
   }
 };
 
 // HTML Event Handlers
 button.addEventListener('click', runTests);
+
+// helper functions
+const timeElapsed = (minutesElapsed, secondsElapsed) => {
+  if (minutesElapsed === 0 && secondsElapsed === 0) {
+    return 'There was an error with the test';
+  }
+
+  let timeElapsedStatement;
+
+  if (minutesElapsed > 0) {
+    timeElapsedStatement = `${minutesElapsed} minute`;
+    if (minutesElapsed > 1) timeElapsedStatement += 's';
+    if (secondsElapsed === 0) {
+      timeElapsedStatement += ' precisely';
+    } else {
+      timeElapsedStatement += `and ${secondsElapsed} second`;
+      if (secondsElapsed > 1) timeElapsedStatement += 's';
+    }
+  } else {
+    timeElapsedStatement = `${secondsElapsed} second`;
+    if (minutesElapsed > 1) timeElapsedStatement += 's';
+  }
+  return timeElapsedStatement;
+};
+
+function calculateMeanHttpTime(results) {
+  let totalHttpTime;
+  for (let i = 0; i < results.length; i++) {
+    totalHttpTime += results[i].trialTimeInMs;
+  }
+  return totalHttpTime / results.length;
+}
+
+const updateHTMLAfterTestFinished = (testSummary) => {
+  resultICMPTrialsCompleted.innerHTML = testSummary.icmpTrialsCompleted;
+  resultHttpUpTrialsCompleted.innerHTML =
+    testSummary.resultHttpUpTrialsCompleted;
+  resultHttpDownTrialsCompleted.innerHTML =
+    testSummary.resultHttpDownTrialsCompleted;
+
+  elementTestStartTime.innerHTML = testSummary.testLocalStartTime;
+  elementTimeElapsed.innerHTML = testSummary.timeElapsed;
+  elementMeanRTT.innerHTML = testSummary.meanRTT;
+  elementMinRTT.innerHTML = testSummary.minRTT;
+  elementMaxRTT.innerHTML = testSummary.maxRTT;
+  elementPacketLossRatio.innerHTML = testSummary.packetLossRatio;
+  elementMeanUpHttpTime.innerHTML = testSummary.meanHttpUpTime;
+  elementMinUpHttpTime.innerHTML = testSummary.minHttpUpTime;
+  elementMaxUpHttpTime.innerHTML = testSummary.maxHttpUpTime;
+  elementUpThroughput.innerHTML = testSummary.uplinkThroughput;
+  elementUpUnsuccessfulFileAccess.innerHTML =
+    testSummary.uplinkUnsuccessfulFileAccess;
+  elementMeanDownHttpTime.innerHTML = testSummary.meanHttpDownTime;
+  elementMinDownHttpTime.innerHTML = testSummary.minHttpDownTime;
+  elementMaxDownHttpTime.innerHTML = testSummary.maxHttpDownTime;
+  elementDownThroughput.innerHTML = testSummary.downlinkThroughput;
+  elementDownUnsuccessfulFileAccess.innerHTML =
+    testSummary.downlinkUnsuccessfulFileAccess;
+  resultsElements[0].classList.remove('hidden');
+  resultsElements[1].classList.remove('hidden');
+};
