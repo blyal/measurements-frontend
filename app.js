@@ -1,17 +1,5 @@
 //TODO: how to ensure that only one TCP connection is used?
 
-// Initialise File for sending
-const filePath = './get-file';
-let fileData;
-let fileSize;
-fetch(filePath)
-  .then((response) => response.blob())
-  .then((data) => {
-    console.log('File retrieved: ', data);
-    fileData = data;
-    fileSize = data.size;
-  });
-
 // HTML Elements
 const testStatusElement = document.getElementById('status');
 const testLabelInput = document.getElementById('testLabel');
@@ -22,63 +10,112 @@ const httpTrialsQuantityInput = document.getElementById('httpTrialsQuant');
 const runTimeoutInput = document.getElementById('testsTimeout');
 const button = document.getElementById('runTests');
 const resultsElements = document.getElementsByClassName('results');
-const elementICMPTrialsCompleted = document.getElementsByClassName(
+const elementICMPTrialsCompleted = document.getElementById(
   'elementICMPTrialsCompleted'
 );
-const elementHttpUpTrialsCompleted = document.getElementsByClassName(
+const elementHttpUpTrialsCompleted = document.getElementById(
   'elementHttpUpTrialsCompleted'
 );
-const elementHttpDownTrialsCompleted = document.getElementsByClassName(
+const elementHttpDownTrialsCompleted = document.getElementById(
   'elementHttpDownTrialsCompleted'
 );
-const elementTestStartTime = document.getElementsByClassName(
-  'elementTestStartTime'
-);
-const elementTimeElapsed =
-  document.getElementsByClassName('elementTimeElapsed');
-const elementMeanRTT = document.getElementsByClassName('elementMeanRTT');
-const elementMinRTT = document.getElementsByClassName('elementMinRTT');
-const elementMaxRTT = document.getElementsByClassName('elementMaxRTT');
-const elementPacketLossRatio = document.getElementsByClassName(
+const elementTestStartTime = document.getElementById('elementTestStartTime');
+const elementTimeElapsed = document.getElementById('elementTimeElapsed');
+const elementMeanRTT = document.getElementById('elementMeanRTT');
+const elementMinRTT = document.getElementById('elementMinRTT');
+const elementMaxRTT = document.getElementById('elementMaxRTT');
+const elementPacketLossRatio = document.getElementById(
   'elementPacketLossRatio'
 );
-const elementMeanUpHttpTime = document.getElementsByClassName(
-  'elementMeanUpHttpTime'
-);
-const elementMinUpHttpTime = document.getElementsByClassName(
-  'elementMinUpHttpTime'
-);
-const elementMaxUpHttpTime = document.getElementsByClassName(
-  'elementMaxUpHttpTime'
-);
-const elementUpThroughput = document.getElementsByClassName(
-  'elementUpThroughput'
-);
-const elementUpUnsuccessfulFileAccess = document.getElementsByClassName(
+const elementMeanUpHttpTime = document.getElementById('elementMeanUpHttpTime');
+const elementMinUpHttpTime = document.getElementById('elementMinUpHttpTime');
+const elementMaxUpHttpTime = document.getElementById('elementMaxUpHttpTime');
+const elementUpThroughput = document.getElementById('elementUpThroughput');
+const elementUpUnsuccessfulFileAccess = document.getElementById(
   'elementUpUnsuccessfulFileAccess'
 );
-const elementMeanDownHttpTime = document.getElementsByClassName(
+const elementMeanDownHttpTime = document.getElementById(
   'elementMeanDownHttpTime'
 );
-const elementMinDownHttpTime = document.getElementsByClassName(
+const elementMinDownHttpTime = document.getElementById(
   'elementMinDownHttpTime'
 );
-const elementMaxDownHttpTime = document.getElementsByClassName(
+const elementMaxDownHttpTime = document.getElementById(
   'elementMaxDownHttpTime'
 );
-const elementDownThroughput = document.getElementsByClassName(
-  'elementDownThroughput'
-);
-const elementDownUnsuccessfulFileAccess = document.getElementsByClassName(
+const elementDownThroughput = document.getElementById('elementDownThroughput');
+const elementDownUnsuccessfulFileAccess = document.getElementById(
   'elementDownUnsuccessfulFileAccess'
 );
 
 // State
+const fileSize = 513024;
+const downlinkFilePath = './get-file';
+let fileBlob;
 let testStatus = 'Idle';
+
+// Initialise State
+downloadFile();
+
+// Update State
 const updateTestStatus = (newStatus) => {
   testStatus = newStatus;
   testStatusElement.innerHTML = newStatus;
 };
+
+// Download File
+async function downloadFile(signal) {
+  try {
+    const response = await fetch(downlinkFilePath, {
+      method: 'GET',
+      signal,
+    });
+    const data = await response.blob();
+    console.log('File retrieved: ', data);
+    if (data.size === fileSize && !Boolean(signal)) {
+      fileBlob = data;
+    } else if (data.size !== fileSize) {
+      throw new Error('There was an error with the file');
+    }
+    return { data, status: response.status };
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Downlink Trial
+async function downlinkTrial(httpTrialTimeLimitInMs) {
+  const controller = new AbortController();
+  const signal = controller.signal;
+  const startTime = performance.now();
+
+  setTimeout(() => {
+    controller.abort();
+  }, httpTrialTimeLimitInMs);
+
+  try {
+    const trial = await downloadFile(signal);
+    const endTime = performance.now();
+    if (trial.status === 200) {
+      console.log(
+        'File successfully downloaded from server \n Data: ',
+        trial.data
+      );
+    }
+    return {
+      trialTimeInMs: endTime - startTime,
+      trialResult: trial.status === 200 ? 'success' : 'error',
+    };
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      console.log('Trial failed due to speed error');
+      return { trialTimeInMs: httpTrialTimeLimitInMs, trialResult: 'failed' };
+    } else {
+      console.error('Error downloading file from server: ', error);
+      return { trialTimeInMs: null, trialResult: 'error' };
+    }
+  }
+}
 
 // Uplink Trial
 const uplinkTrial = async (httpTrialTimeLimitInMs) => {
@@ -92,16 +129,21 @@ const uplinkTrial = async (httpTrialTimeLimitInMs) => {
 
   return fetch('http://localhost:1414/uplink', {
     method: 'POST',
-    body: fileData,
+    body: fileBlob,
     signal,
   })
     .then((response) => {
-      console.log(
-        'File successfully received by server \n Response: ',
-        response
-      );
       const endTime = performance.now();
-      return { trialTimeInMs: endTime - startTime, trialResult: 'success' };
+      if (response.status === 200) {
+        console.log(
+          'File successfully received by server \n Response: ',
+          response
+        );
+      }
+      return {
+        trialTimeInMs: endTime - startTime,
+        trialResult: response.status === 200 ? 'success' : 'error',
+      };
     })
     .catch((error) => {
       if (error.name === 'AbortError') {
@@ -151,10 +193,9 @@ const runTests = async () => {
     const numberOfIcmpTrials = +icmpTrialsQuantityInput.value;
     const numberOfHttpTrials = +httpTrialsQuantityInput.value;
     const advertisedHttpDataRateInKBps = +advertisedDataRateInput.value;
-    //kBps should be the same as Bpms
-    //const advertisedHttpDataRateInBps = advertisedHttpDataRateInKBps * 1000;
-    //const advertisedHttpDataRateInBpms = advertisedHttpDataRateInBps / 1000;
-    const httpTrialTimeLimitInMs = fileSize / advertisedHttpDataRateInKBps;
+    const advertisedHttpDataRateInBpms =
+      (advertisedHttpDataRateInKBps * 1024) / 1000;
+    const httpTrialTimeLimitInMs = fileSize / advertisedHttpDataRateInBpms;
     //TODO: do something with this remote endpoint
     const remoteEndpoint = remoteEndpointInput.value;
     const results = [];
@@ -170,19 +211,38 @@ const runTests = async () => {
 
     // loop for sending the calls
     for (let i = 0; i < numberOfHttpTrials; i++) {
-      const { trialTimeInMs, trialResult } = await uplinkTrial(
-        httpTrialTimeLimitInMs
-      );
-      const trialData = {
-        testUTCStartTime,
-        testLabel,
-        trialNumber: i + 1,
-        trialResult,
-        trialTimeInMs: Math.round(trialTimeInMs),
-      };
-      results.push(trialData);
-      if (!isRunning) {
-        break;
+      if (i % 2 === 1) {
+        const { trialTimeInMs, trialResult } = await uplinkTrial(
+          httpTrialTimeLimitInMs
+        );
+        const trialData = {
+          testUTCStartTime,
+          testLabel,
+          trialNumber: i + 1,
+          trialResult,
+          trialTimeInMs: Math.round(trialTimeInMs),
+          trialType: 'uplink',
+        };
+        results.push(trialData);
+        if (!isRunning) {
+          break;
+        }
+      } else {
+        const { trialTimeInMs, trialResult } = await downlinkTrial(
+          httpTrialTimeLimitInMs
+        );
+        const trialData = {
+          testUTCStartTime,
+          testLabel,
+          trialNumber: i + 1,
+          trialResult,
+          trialTimeInMs: Math.round(trialTimeInMs),
+          trialType: 'downlink',
+        };
+        results.push(trialData);
+        if (!isRunning) {
+          break;
+        }
       }
     }
 
@@ -199,25 +259,28 @@ const runTests = async () => {
       testLocalStartTime: testLocalStartTime.toLocaleString(),
       timeElapsed: timeElapsed(minutesElapsed, secondsRemainderElapsed),
       icmpTrialsCompleted: 0,
-      //TODO: this has to change. Not all results are upTrials
-      httpUpTrialsCompleted: results.length,
-      httpDownTrialsCompleted: 0,
+      httpUpTrialsCompleted: uplinkResults(results).length,
+      httpDownTrialsCompleted: downlinkResults(results).length,
       meanRTT: undefined,
       minRTT: undefined,
       maxRTT: undefined,
       packetLossRatio: undefined,
-      meanHttpUpTime: calculateMeanHttpTime(results),
-      minHttpUpTime: results.reduce((prev, curr) =>
+      meanHttpUpTime: calculateMeanHttpTime(uplinkResults(results)),
+      minHttpUpTime: uplinkResults(results).reduce((prev, curr) =>
         prev.trialTimeInMs < curr.trialTimeInMs ? prev : curr
       ).trialTimeInMs,
-      maxHttpUpTime: results.reduce((prev, curr) =>
+      maxHttpUpTime: uplinkResults(results).reduce((prev, curr) =>
         prev.trialTimeInMs > curr.trialTimeInMs ? prev : curr
       ).trialTimeInMs,
       uplinkThroughput: undefined,
       uplinkUnsuccessfulFileAccess: undefined,
-      meanHttpDownTime: undefined,
-      minHttpDownTime: undefined,
-      maxHttpDownTime: undefined,
+      meanHttpDownTime: calculateMeanHttpTime(downlinkResults(results)),
+      minHttpDownTime: downlinkResults(results).reduce((prev, curr) =>
+        prev.trialTimeInMs < curr.trialTimeInMs ? prev : curr
+      ).trialTimeInMs,
+      maxHttpDownTime: downlinkResults(results).reduce((prev, curr) =>
+        prev.trialTimeInMs > curr.trialTimeInMs ? prev : curr
+      ).trialTimeInMs,
       downlinkThroughput: undefined,
       downlinkUnsuccessfulFileAccess: undefined,
     };
@@ -249,44 +312,51 @@ const timeElapsed = (minutesElapsed, secondsElapsed) => {
     }
   } else {
     timeElapsedStatement = `${secondsElapsed} second`;
-    if (minutesElapsed > 1) timeElapsedStatement += 's';
+    if (secondsElapsed > 1) timeElapsedStatement += 's';
   }
   return timeElapsedStatement;
 };
 
+function filterByTypeOfTrial(trial, trialTypeToFilterFor) {
+  return trial.trialType === trialTypeToFilterFor;
+}
+
+const uplinkResults = (results) =>
+  results.filter((result) => filterByTypeOfTrial(result, 'uplink'));
+const downlinkResults = (results) =>
+  results.filter((result) => filterByTypeOfTrial(result, 'downlink'));
+
 function calculateMeanHttpTime(results) {
-  let totalHttpTime;
+  let totalHttpTime = 0;
   for (let i = 0; i < results.length; i++) {
     totalHttpTime += results[i].trialTimeInMs;
   }
-  return totalHttpTime / results.length;
+  return Math.round(totalHttpTime / results.length);
 }
 
-const updateHTMLAfterTestFinished = (testSummary) => {
-  resultICMPTrialsCompleted.innerHTML = testSummary.icmpTrialsCompleted;
-  resultHttpUpTrialsCompleted.innerHTML =
-    testSummary.resultHttpUpTrialsCompleted;
-  resultHttpDownTrialsCompleted.innerHTML =
-    testSummary.resultHttpDownTrialsCompleted;
+const updateHTMLAfterTestFinished = (summary) => {
+  elementICMPTrialsCompleted.innerHTML = summary.icmpTrialsCompleted;
+  elementHttpUpTrialsCompleted.innerHTML = summary.httpUpTrialsCompleted;
+  elementHttpDownTrialsCompleted.innerHTML = summary.httpDownTrialsCompleted;
 
-  elementTestStartTime.innerHTML = testSummary.testLocalStartTime;
-  elementTimeElapsed.innerHTML = testSummary.timeElapsed;
-  elementMeanRTT.innerHTML = testSummary.meanRTT;
-  elementMinRTT.innerHTML = testSummary.minRTT;
-  elementMaxRTT.innerHTML = testSummary.maxRTT;
-  elementPacketLossRatio.innerHTML = testSummary.packetLossRatio;
-  elementMeanUpHttpTime.innerHTML = testSummary.meanHttpUpTime;
-  elementMinUpHttpTime.innerHTML = testSummary.minHttpUpTime;
-  elementMaxUpHttpTime.innerHTML = testSummary.maxHttpUpTime;
-  elementUpThroughput.innerHTML = testSummary.uplinkThroughput;
+  elementTestStartTime.innerHTML = summary.testLocalStartTime;
+  elementTimeElapsed.innerHTML = summary.timeElapsed;
+  elementMeanRTT.innerHTML = summary.meanRTT;
+  elementMinRTT.innerHTML = summary.minRTT;
+  elementMaxRTT.innerHTML = summary.maxRTT;
+  elementPacketLossRatio.innerHTML = summary.packetLossRatio;
+  elementMeanUpHttpTime.innerHTML = summary.meanHttpUpTime;
+  elementMinUpHttpTime.innerHTML = summary.minHttpUpTime;
+  elementMaxUpHttpTime.innerHTML = summary.maxHttpUpTime;
+  elementUpThroughput.innerHTML = summary.uplinkThroughput;
   elementUpUnsuccessfulFileAccess.innerHTML =
-    testSummary.uplinkUnsuccessfulFileAccess;
-  elementMeanDownHttpTime.innerHTML = testSummary.meanHttpDownTime;
-  elementMinDownHttpTime.innerHTML = testSummary.minHttpDownTime;
-  elementMaxDownHttpTime.innerHTML = testSummary.maxHttpDownTime;
-  elementDownThroughput.innerHTML = testSummary.downlinkThroughput;
+    summary.uplinkUnsuccessfulFileAccess;
+  elementMeanDownHttpTime.innerHTML = summary.meanHttpDownTime;
+  elementMinDownHttpTime.innerHTML = summary.minHttpDownTime;
+  elementMaxDownHttpTime.innerHTML = summary.maxHttpDownTime;
+  elementDownThroughput.innerHTML = summary.downlinkThroughput;
   elementDownUnsuccessfulFileAccess.innerHTML =
-    testSummary.downlinkUnsuccessfulFileAccess;
+    summary.downlinkUnsuccessfulFileAccess;
   resultsElements[0].classList.remove('hidden');
   resultsElements[1].classList.remove('hidden');
 };
