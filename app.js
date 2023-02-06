@@ -10,14 +10,14 @@ const httpTrialsQuantityInput = document.getElementById('httpTrialsQuant');
 const runTimeoutInput = document.getElementById('testsTimeout');
 const button = document.getElementById('runTests');
 const resultsElements = document.getElementsByClassName('results');
-const elementICMPTrialsCompleted = document.getElementById(
-  'elementICMPTrialsCompleted'
+const elementICMPTrialsAttempted = document.getElementById(
+  'elementICMPTrialsAttempted'
 );
-const elementHttpUpTrialsCompleted = document.getElementById(
-  'elementHttpUpTrialsCompleted'
+const elementhttpUpTrialsAttempted = document.getElementById(
+  'elementhttpUpTrialsAttempted'
 );
-const elementHttpDownTrialsCompleted = document.getElementById(
-  'elementHttpDownTrialsCompleted'
+const elementHttpDownTrialsAttempted = document.getElementById(
+  'elementHttpDownTrialsAttempted'
 );
 const elementTestStartTime = document.getElementById('elementTestStartTime');
 const elementTimeElapsed = document.getElementById('elementTimeElapsed');
@@ -84,14 +84,14 @@ async function downloadFile(signal) {
 }
 
 // Downlink Trial
-async function downlinkTrial(httpTrialTimeLimitInMs) {
+async function downlinkTrial() {
   const controller = new AbortController();
   const signal = controller.signal;
   const startTime = performance.now();
 
   setTimeout(() => {
     controller.abort();
-  }, httpTrialTimeLimitInMs);
+  }, 120000);
 
   try {
     const trial = await downloadFile(signal);
@@ -109,7 +109,7 @@ async function downlinkTrial(httpTrialTimeLimitInMs) {
   } catch (error) {
     if (error.name === 'AbortError') {
       console.log('Trial failed due to speed error');
-      return { trialTimeInMs: httpTrialTimeLimitInMs, trialResult: 'failed' };
+      return { trialTimeInMs: 120000, trialResult: 'failed' };
     } else {
       console.error('Error downloading file from server: ', error);
       return { trialTimeInMs: null, trialResult: 'error' };
@@ -118,14 +118,14 @@ async function downlinkTrial(httpTrialTimeLimitInMs) {
 }
 
 // Uplink Trial
-const uplinkTrial = async (httpTrialTimeLimitInMs) => {
+const uplinkTrial = async () => {
   const controller = new AbortController();
   const signal = controller.signal;
   const startTime = performance.now();
 
   setTimeout(() => {
     controller.abort();
-  }, httpTrialTimeLimitInMs);
+  }, 120000);
 
   return fetch('http://localhost:1414/uplink', {
     method: 'POST',
@@ -148,7 +148,7 @@ const uplinkTrial = async (httpTrialTimeLimitInMs) => {
     .catch((error) => {
       if (error.name === 'AbortError') {
         console.log('Trial failed due to speed error');
-        return { trialTimeInMs: httpTrialTimeLimitInMs, trialResult: 'failed' };
+        return { trialTimeInMs: 120000, trialResult: 'failed' };
       } else {
         console.error('Error sending file to server: ', error);
         return { trialTimeInMs: null, trialResult: 'error' };
@@ -195,7 +195,8 @@ const runTests = async () => {
     const advertisedHttpDataRateInKBps = +advertisedDataRateInput.value;
     const advertisedHttpDataRateInBpms =
       (advertisedHttpDataRateInKBps * 1024) / 1000;
-    const httpTrialTimeLimitInMs = fileSize / advertisedHttpDataRateInBpms;
+    const maximumTrialTimeInMsReAdvertisedHttpRate =
+      fileSize / advertisedHttpDataRateInBpms;
     //TODO: do something with this remote endpoint
     const remoteEndpoint = remoteEndpointInput.value;
     const results = [];
@@ -212,9 +213,7 @@ const runTests = async () => {
     // loop for sending the calls
     for (let i = 0; i < numberOfHttpTrials; i++) {
       if (i % 2 === 1) {
-        const { trialTimeInMs, trialResult } = await uplinkTrial(
-          httpTrialTimeLimitInMs
-        );
+        const { trialTimeInMs, trialResult } = await uplinkTrial();
         const trialData = {
           testUTCStartTime,
           testLabel,
@@ -228,9 +227,7 @@ const runTests = async () => {
           break;
         }
       } else {
-        const { trialTimeInMs, trialResult } = await downlinkTrial(
-          httpTrialTimeLimitInMs
-        );
+        const { trialTimeInMs, trialResult } = await downlinkTrial();
         const trialData = {
           testUTCStartTime,
           testLabel,
@@ -254,35 +251,59 @@ const runTests = async () => {
     );
     const secondsRemainderElapsed =
       Math.round((testLocalEndTime - testLocalStartTime) / 1000) % 60;
+    const uplinkTrialsFailed = results.filter(
+      (result) =>
+        result.trialResult !== 'success' && result.trialType === 'uplink'
+    ).length;
+    const downlinkTrialsFailed = results.filter(
+      (result) =>
+        result.trialResult !== 'success' && result.trialType === 'downlink'
+    ).length;
 
     let testSummary = {
       testLocalStartTime: testLocalStartTime.toLocaleString(),
       timeElapsed: timeElapsed(minutesElapsed, secondsRemainderElapsed),
-      icmpTrialsCompleted: 0,
-      httpUpTrialsCompleted: uplinkResults(results).length,
-      httpDownTrialsCompleted: downlinkResults(results).length,
+      ICMPTrialsAttempted: 0,
+      httpUpTrialsAttempted: uplinkResults(results).length,
+      httpDownTrialsAttempted: downlinkResults(results).length,
+      failedHttpUpTrials: uplinkTrialsFailed,
+      failedHttpDownTrials: downlinkTrialsFailed,
       meanRTT: undefined,
       minRTT: undefined,
       maxRTT: undefined,
       packetLossRatio: undefined,
-      meanHttpUpTime: calculateMeanHttpTime(uplinkResults(results)),
-      minHttpUpTime: uplinkResults(results).reduce((prev, curr) =>
+      meanSuccessHttpUpTime: calculateMeanHttpTime(
+        uplinkResults(results),
+        uplinkTrialsFailed
+      ),
+      minSuccessHttpUpTime: uplinkResults(results).reduce((prev, curr) =>
         prev.trialTimeInMs < curr.trialTimeInMs ? prev : curr
       ).trialTimeInMs,
-      maxHttpUpTime: uplinkResults(results).reduce((prev, curr) =>
+      maxSuccessHttpUpTime: uplinkResults(results).reduce((prev, curr) =>
         prev.trialTimeInMs > curr.trialTimeInMs ? prev : curr
       ).trialTimeInMs,
-      uplinkThroughput: undefined,
-      uplinkUnsuccessfulFileAccess: undefined,
-      meanHttpDownTime: calculateMeanHttpTime(downlinkResults(results)),
-      minHttpDownTime: downlinkResults(results).reduce((prev, curr) =>
+      uplinkThroughput: calculateThroughputPercentage(
+        uplinkResults(results),
+        maximumTrialTimeInMsReAdvertisedHttpRate
+      ),
+      uplinkUnsuccessfulFileAccess:
+        100 * (uplinkTrialsFailed / uplinkResults(results).length),
+      meanSuccessHttpDownTime: calculateMeanHttpTime(
+        downlinkResults(results),
+        downlinkTrialsFailed
+      ),
+      minSuccessHttpDownTime: downlinkResults(results).reduce((prev, curr) =>
         prev.trialTimeInMs < curr.trialTimeInMs ? prev : curr
       ).trialTimeInMs,
-      maxHttpDownTime: downlinkResults(results).reduce((prev, curr) =>
+      maxSuccessHttpDownTime: downlinkResults(results).reduce((prev, curr) =>
         prev.trialTimeInMs > curr.trialTimeInMs ? prev : curr
       ).trialTimeInMs,
-      downlinkThroughput: undefined,
-      downlinkUnsuccessfulFileAccess: undefined,
+      downlinkThroughput: calculateThroughputPercentage(
+        downlinkResults(results),
+        maximumTrialTimeInMsReAdvertisedHttpRate
+      ),
+      downlinkUnsuccessfulFileAccess:
+        100 * (downlinkTrialsFailed / downlinkResults(results).length),
     };
     console.log(testSummary);
     updateTestStatus('Completed');
@@ -326,18 +347,27 @@ const uplinkResults = (results) =>
 const downlinkResults = (results) =>
   results.filter((result) => filterByTypeOfTrial(result, 'downlink'));
 
-function calculateMeanHttpTime(results) {
+function calculateMeanHttpTime(results, failedTrials) {
   let totalHttpTime = 0;
   for (let i = 0; i < results.length; i++) {
-    totalHttpTime += results[i].trialTimeInMs;
+    if (results[i].trialResult === 'success') {
+      totalHttpTime += results[i].trialTimeInMs;
+    }
   }
-  return Math.round(totalHttpTime / results.length);
+  return Math.round(totalHttpTime / (results.length - failedTrials));
+}
+
+function calculateThroughputPercentage(results, maxTime) {
+  const prolongedTrials = results.filter(
+    (result) => result.timeElapsed < maxTime
+  );
+  return 100 * (prolongedTrials / results.length);
 }
 
 const updateHTMLAfterTestFinished = (summary) => {
-  elementICMPTrialsCompleted.innerHTML = summary.icmpTrialsCompleted;
-  elementHttpUpTrialsCompleted.innerHTML = summary.httpUpTrialsCompleted;
-  elementHttpDownTrialsCompleted.innerHTML = summary.httpDownTrialsCompleted;
+  elementICMPTrialsAttempted.innerHTML = summary.ICMPTrialsAttempted;
+  elementhttpUpTrialsAttempted.innerHTML = summary.httpUpTrialsAttempted;
+  elementHttpDownTrialsAttempted.innerHTML = summary.httpDownTrialsAttempted;
 
   elementTestStartTime.innerHTML = summary.testLocalStartTime;
   elementTimeElapsed.innerHTML = summary.timeElapsed;
@@ -345,15 +375,15 @@ const updateHTMLAfterTestFinished = (summary) => {
   elementMinRTT.innerHTML = summary.minRTT;
   elementMaxRTT.innerHTML = summary.maxRTT;
   elementPacketLossRatio.innerHTML = summary.packetLossRatio;
-  elementMeanUpHttpTime.innerHTML = summary.meanHttpUpTime;
-  elementMinUpHttpTime.innerHTML = summary.minHttpUpTime;
-  elementMaxUpHttpTime.innerHTML = summary.maxHttpUpTime;
+  elementMeanUpHttpTime.innerHTML = summary.meanSuccessHttpUpTime;
+  elementMinUpHttpTime.innerHTML = summary.minSuccessHttpUpTime;
+  elementMaxUpHttpTime.innerHTML = summary.maxSuccessHttpUpTime;
   elementUpThroughput.innerHTML = summary.uplinkThroughput;
   elementUpUnsuccessfulFileAccess.innerHTML =
     summary.uplinkUnsuccessfulFileAccess;
-  elementMeanDownHttpTime.innerHTML = summary.meanHttpDownTime;
-  elementMinDownHttpTime.innerHTML = summary.minHttpDownTime;
-  elementMaxDownHttpTime.innerHTML = summary.maxHttpDownTime;
+  elementMeanDownHttpTime.innerHTML = summary.meanSuccessHttpDownTime;
+  elementMinDownHttpTime.innerHTML = summary.minSuccessHttpDownTime;
+  elementMaxDownHttpTime.innerHTML = summary.maxSuccessHttpDownTime;
   elementDownThroughput.innerHTML = summary.downlinkThroughput;
   elementDownUnsuccessfulFileAccess.innerHTML =
     summary.downlinkUnsuccessfulFileAccess;

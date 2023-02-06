@@ -87,19 +87,19 @@
           <div class="tool-body-child results hidden">
             <h4>Results:</h4>
             <h4>
-              <span id="elementICMPTrialsCompleted">0</span> ICMP trials
-              completed
+              <span id="elementICMPTrialsAttempted">0</span> ICMP trials
+              attempted
             </h4>
             <h4>
-              <span id="elementHttpUpTrialsCompleted">0</span> HTTP uplink
-              trials completed
+              <span id="elementhttpUpTrialsAttempted">0</span> HTTP uplink
+              trials attempted
             </h4>
             <h4>
-              <span id="elementHttpDownTrialsCompleted">0</span> HTTP downlink
-              trials completed
+              <span id="elementHttpDownTrialsAttempted">0</span> HTTP downlink
+              trials attempted
             </h4>
             <div class="results-drilldown">
-              <p>Test Started: <span id="elementTestStartTime">Error</span></p>
+              <p>Tests Started: <span id="elementTestStartTime">Error</span></p>
               <p>
                 Total time elapsed: <span id="elementTimeElapsed">Error</span>
               </p>
@@ -111,43 +111,41 @@
                 <span id="elementPacketLossRatio">-</span>
               </p>
               <p>
-                Mean time per uplink http trial (ms):
-                <span id="elementMeanUpHttpTime">-</span>
+                Mean time per successful uplink trial:
+                <span id="elementMeanUpHttpTime">-</span>ms
               </p>
               <p>
-                Min uplink http trial time (ms):
-                <span id="elementMinUpHttpTime">-</span>
+                Min successful uplink trial time:
+                <span id="elementMinUpHttpTime">-</span>ms
               </p>
               <p>
-                Max uplink http trial time (ms):
-                <span id="elementMaxUpHttpTime">-</span>
+                Max successful uplink trial time:
+                <span id="elementMaxUpHttpTime">-</span>ms
+              </p>
+              <p>Uplink Throughput: <span id="elementUpThroughput">-</span>%</p>
+              <p>
+                Uplink Unsuccessful file access ratio:
+                <span id="elementUpUnsuccessfulFileAccess">-</span>%
               </p>
               <p>
-                Uplink Throughput (%): <span id="elementUpThroughput">-</span>
+                Mean time per successful downlink trial:
+                <span id="elementMeanDownHttpTime">-</span>ms
               </p>
               <p>
-                Uplink Unsuccessful file access ratio (%):
-                <span id="elementUpUnsuccessfulFileAccess">-</span>
+                Min successful downlink trial time:
+                <span id="elementMinDownHttpTime">-</span>ms
               </p>
               <p>
-                Mean time per downlink http trial (ms):
-                <span id="elementMeanDownHttpTime">-</span>
+                Max successful downlink trial time:
+                <span id="elementMaxDownHttpTime">-</span>ms
               </p>
               <p>
-                Min downlink http trial time (ms):
-                <span id="elementMinDownHttpTime">-</span>
+                Downlink Throughput:
+                <span id="elementDownThroughput">-</span>%
               </p>
               <p>
-                Max downlink http trial time (ms):
-                <span id="elementMaxDownHttpTime">-</span>
-              </p>
-              <p>
-                Downlink Throughput (%):
-                <span id="elementDownThroughput">-</span>
-              </p>
-              <p>
-                Downlink Unsuccessful file access ratio (%):
-                <span id="elementDownUnsuccessfulFileAccess">-</span>
+                Downlink Unsuccessful file access ratio:
+                <span id="elementDownUnsuccessfulFileAccess">-</span>%
               </p>
             </div>
           </div>
