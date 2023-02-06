@@ -82,9 +82,16 @@
             </div>
           </div>
           <div class="tool-body-child button-container">
-            <button class="button" id="runTests">Run Tests</button>
+            <button class="button" id="testButton">
+              <span id="runTestsText">Run Tests</span>
+              <div class="loading hidden">
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+              </div>
+            </button>
           </div>
-          <div class="tool-body-child results hidden">
+          <div class="tool-body-child results removed">
             <h4>Results:</h4>
             <h4>
               <span id="elementICMPTrialsAttempted">0</span> ICMP trials
@@ -149,7 +156,7 @@
               </p>
             </div>
           </div>
-          <div class="tool-footer results hidden">
+          <div class="tool-footer results removed">
             <div>
               <div class="label-wrapper">
                 <label for="csv-path">CSV File Path:</label>
@@ -162,6 +169,22 @@
           </div>
         </div>
       </article>
+    </section>
+    <section class="pop-up removed">
+      <div class="csv-check">
+        <p>
+          Please ensure you have exported the results to CSV before continuing
+        </p>
+        <br /><br />
+        <div class="csv-check-buttons">
+          <button class="button" id="cancelRefresh">
+            I still need to export to CSV
+          </button>
+          <button class="button" id="proceedRefresh">
+            I have already exported to CSV or It's Not Necessary
+          </button>
+        </div>
+      </div>
     </section>
     <script src="app.js"></script>
   </body>

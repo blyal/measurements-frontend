@@ -131,7 +131,8 @@ p {
   text-decoration: none;
   display: inline-block;
   font-size: 16px;
-  border-radius: 5%;
+  border-radius: 10px;
+  position: relative;
 }
 
 .button:hover {
@@ -143,8 +144,12 @@ p {
   background-color: #003366;
 }
 
-.hidden {
+.removed {
   display: none;
+}
+
+.hidden {
+  visibility: hidden;
 }
 
 .results-drilldown {
@@ -184,4 +189,90 @@ p {
 .csv-export-container .button:active {
   color: white;
   background-color: #ffce31;
+}
+
+.pop-up {
+  position: fixed;
+  z-index: 10;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 75%;
+}
+
+.csv-check {
+  padding: 5%;
+  background-color: #6f6e6e;
+  border-radius: 10px;
+  border: 2px #ffce31 solid;
+}
+
+.csv-check p {
+  color: #ffce31;
+  font-size: 20px;
+}
+
+.csv-check-buttons {
+  display: flex;
+  flex-direction: column;
+}
+
+.csv-check-buttons button {
+  border-radius: 0;
+  margin: 0.5% 0;
+}
+
+#cancelRefresh {
+  background-color: #cc3333;
+}
+
+#cancelRefresh:hover {
+  background-color: #ff3333;
+}
+
+#cancelRefresh:active {
+  color: black;
+  background-color: #cc3333;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin: 0 5px;
+  animation: dot-loading 1s ease-in-out infinite;
+  background-color: white;
+}
+
+@keyframes dot-loading {
+  0%,
+  80%,
+  100% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(0);
+  }
+}
+
+.dot:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.dot:nth-child(3) {
+  animation-delay: 0.4s;
 }

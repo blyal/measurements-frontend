@@ -8,7 +8,9 @@ const advertisedDataRateInput = document.getElementById('httpAdvertisedRate');
 const icmpTrialsQuantityInput = document.getElementById('icmpTrialsQuant');
 const httpTrialsQuantityInput = document.getElementById('httpTrialsQuant');
 const runTimeoutInput = document.getElementById('testsTimeout');
-const button = document.getElementById('runTests');
+const button = document.getElementById('testButton');
+const runTestsButtonText = document.getElementById('runTestsText');
+const loadingDotsContainer = document.getElementsByClassName('loading')[0];
 const resultsElements = document.getElementsByClassName('results');
 const elementICMPTrialsAttempted = document.getElementById(
   'elementICMPTrialsAttempted'
@@ -61,6 +63,10 @@ downloadFile();
 const updateTestStatus = (newStatus) => {
   testStatus = newStatus;
   testStatusElement.innerHTML = newStatus;
+  if (newStatus === 'Completed') {
+    loadingDotsContainer.classList.add('hidden');
+    runTestsButtonText.classList.remove('hidden');
+  }
 };
 
 // Download File
@@ -185,6 +191,8 @@ const runTests = async () => {
   } else {
     // init
     updateTestStatus('Running');
+    runTestsButtonText.classList.add('hidden');
+    loadingDotsContainer.classList.remove('hidden');
     const testLocalStartTime = new Date();
 
     // function config
@@ -387,6 +395,6 @@ const updateHTMLAfterTestFinished = (summary) => {
   elementDownThroughput.innerHTML = summary.downlinkThroughput;
   elementDownUnsuccessfulFileAccess.innerHTML =
     summary.downlinkUnsuccessfulFileAccess;
-  resultsElements[0].classList.remove('hidden');
-  resultsElements[1].classList.remove('hidden');
+  resultsElements[0].classList.remove('removed');
+  resultsElements[1].classList.remove('removed');
 };
