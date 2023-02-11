@@ -51,7 +51,8 @@ const elementDownUnsuccessfulFileAccess = document.getElementById(
 );
 
 // State
-const fileSize = 513024;
+const fileSizeInBytes = 513024;
+const fileSizeInBits = 4104192;
 const downlinkFilePath = './get-file';
 let fileBlob;
 let testStatus = 'Idle';
@@ -78,9 +79,9 @@ async function downloadFile(signal) {
     });
     const data = await response.blob();
     console.log('File retrieved: ', data);
-    if (data.size === fileSize && !Boolean(signal)) {
+    if (data.size === fileSizeInBytes && !Boolean(signal)) {
       fileBlob = data;
-    } else if (data.size !== fileSize) {
+    } else if (data.size !== fileSizeInBytes) {
       throw new Error('There was an error with the file');
     }
     return { data, status: response.status };
@@ -200,11 +201,12 @@ const runTests = async () => {
     const runTimeoutInMs = runTimeoutInput.value * 60000;
     const numberOfIcmpTrials = +icmpTrialsQuantityInput.value;
     const numberOfHttpTrials = +httpTrialsQuantityInput.value;
-    const advertisedHttpDataRateInKBps = +advertisedDataRateInput.value;
-    const advertisedHttpDataRateInBpms =
-      (advertisedHttpDataRateInKBps * 1024) / 1000;
-    const maximumTrialTimeInMsReAdvertisedHttpRate =
-      fileSize / advertisedHttpDataRateInBpms;
+    const advertisedHttpDataRateInMegabitsPerSec =
+      +advertisedDataRateInput.value;
+    const advertisedHttpDataRateInBitsPerMs =
+      advertisedHttpDataRateInMegabitsPerSec * 1000000 * 1000;
+    // const maximumTrialTimeInMsReAdvertisedHttpRate =
+    //   fileSizeInBytes / advertisedHttpDataRateInBpms;
     //TODO: do something with this remote endpoint
     const remoteEndpoint = remoteEndpointInput.value;
     const results = [];
@@ -292,7 +294,7 @@ const runTests = async () => {
       ).trialTimeInMs,
       uplinkThroughput: calculateThroughputPercentage(
         uplinkResults(results),
-        maximumTrialTimeInMsReAdvertisedHttpRate
+        advertisedHttpDataRateInBitsPerMs
       ),
       uplinkUnsuccessfulFileAccess:
         100 * (uplinkTrialsFailed / uplinkResults(results).length),
@@ -308,7 +310,7 @@ const runTests = async () => {
       ).trialTimeInMs,
       downlinkThroughput: calculateThroughputPercentage(
         downlinkResults(results),
-        maximumTrialTimeInMsReAdvertisedHttpRate
+        advertisedHttpDataRateInBitsPerMs
       ),
       downlinkUnsuccessfulFileAccess:
         100 * (downlinkTrialsFailed / downlinkResults(results).length),
@@ -365,10 +367,15 @@ function calculateMeanHttpTime(results, failedTrials) {
   return Math.round(totalHttpTime / (results.length - failedTrials));
 }
 
-function calculateThroughputPercentage(results, maxTime) {
-  const prolongedTrials = results.filter(
-    (result) => result.timeElapsed < maxTime
-  );
+function calculateThroughputPercentage(
+  results,
+  advertisedHttpDataRateInBitsPerMs
+) {
+  const prolongedTrials = results.filter((result) => {
+    return (
+      fileSizeInBits / result.trialTimeInMs < advertisedHttpDataRateInBitsPerMs
+    );
+  }).length;
   return 100 * (prolongedTrials / results.length);
 }
 
