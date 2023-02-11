@@ -356,7 +356,7 @@ function calculateMeanHttpTime(results, failedTrials) {
       totalHttpTime += results[i].trialTimeInMs;
     }
   }
-  if (results.length - failedTrials === 0) return 0;
+  if (results.length - failedTrials === 0) return '-';
   return Math.round(totalHttpTime / (results.length - failedTrials));
 }
 
@@ -364,7 +364,7 @@ function calculateMinHttpTime(results) {
   const successfulResults = results.filter(
     (result) => result.trialResult === 'success'
   );
-  if (successfulResults.length === 0) return 0;
+  if (successfulResults.length === 0) return '-';
   return successfulResults.reduce((prev, curr) =>
     prev.trialTimeInMs < curr.trialTimeInMs ? prev : curr
   ).trialTimeInMs;
@@ -374,7 +374,7 @@ function calculateMaxHttpTime(results) {
   const successfulResults = results.filter(
     (result) => result.trialResult === 'success'
   );
-  if (successfulResults.length === 0) return 0;
+  if (successfulResults.length === 0) return '-';
   return successfulResults.reduce((prev, curr) =>
     prev.trialTimeInMs > curr.trialTimeInMs ? prev : curr
   ).trialTimeInMs;
@@ -384,12 +384,16 @@ function calculateThroughputPercentage(
   results,
   advertisedHttpDataRateInBitsPerMs
 ) {
-  const prolongedTrials = results.filter((result) => {
+  const successfulResults = results.filter(
+    (result) => result.trialResult === 'success'
+  );
+  if (successfulResults.length === 0) return '-';
+  const prolongedTrials = successfulResults.filter((result) => {
     return (
       fileSizeInBits / result.trialTimeInMs < advertisedHttpDataRateInBitsPerMs
     );
   }).length;
-  return 100 * (prolongedTrials / results.length);
+  return 100 * (prolongedTrials / successfulResults.length);
 }
 
 const updateHTMLAfterTestFinished = (summary) => {
