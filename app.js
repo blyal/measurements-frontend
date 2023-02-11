@@ -15,15 +15,21 @@ const resultsElements = document.getElementsByClassName('results');
 const elementICMPTrialsAttempted = document.getElementById(
   'elementICMPTrialsAttempted'
 );
-const elementhttpUpTrialsAttempted = document.getElementById(
-  'elementhttpUpTrialsAttempted'
+const elementHttpUpTrialsAttempted = document.getElementById(
+  'elementHttpUpTrialsAttempted'
 );
 const elementHttpDownTrialsAttempted = document.getElementById(
   'elementHttpDownTrialsAttempted'
 );
+const elementHttpUpTrialsSuccessful = document.getElementById(
+  'elementHttpUpTrialsSuccessful'
+);
+const elementHttpDownTrialsSuccessful = document.getElementById(
+  'elementHttpDownTrialsSuccessful'
+);
 const elementTestStartTime = document.getElementById('elementTestStartTime');
 const elementTimeElapsed = document.getElementById('elementTimeElapsed');
-const elementMeanRTT = document.getElementById('elementMeanRTT');
+const elementLatency = document.getElementById('elementLatency');
 const elementMinRTT = document.getElementById('elementMinRTT');
 const elementMaxRTT = document.getElementById('elementMaxRTT');
 const elementPacketLossRatio = document.getElementById(
@@ -276,9 +282,11 @@ const runTests = async () => {
       ICMPTrialsAttempted: 0,
       httpUpTrialsAttempted: uplinkResults(results).length,
       httpDownTrialsAttempted: downlinkResults(results).length,
-      failedHttpUpTrials: uplinkTrialsFailedNumber,
-      failedHttpDownTrials: downlinkTrialsFailedNumber,
-      meanRTT: undefined,
+      succeedfulHttpUpTrials:
+        uplinkResults(results).length - uplinkTrialsFailedNumber,
+      succeedfulHttpDownTrials:
+        downlinkResults(results).length - downlinkTrialsFailedNumber,
+      latency: undefined,
       minRTT: undefined,
       maxRTT: undefined,
       packetLossRatio: undefined,
@@ -407,12 +415,14 @@ function calculateUnsuccessfulFileAccessRatio(failedNumber, resultsLength) {
 
 const updateHTMLAfterTestFinished = (summary) => {
   elementICMPTrialsAttempted.innerHTML = summary.ICMPTrialsAttempted;
-  elementhttpUpTrialsAttempted.innerHTML = summary.httpUpTrialsAttempted;
+  elementHttpUpTrialsAttempted.innerHTML = summary.httpUpTrialsAttempted;
   elementHttpDownTrialsAttempted.innerHTML = summary.httpDownTrialsAttempted;
+  elementHttpUpTrialsSuccessful.innerHTML = summary.succeedfulHttpUpTrials;
+  elementHttpDownTrialsSuccessful.innerHTML = summary.succeedfulHttpDownTrials;
 
   elementTestStartTime.innerHTML = summary.testLocalStartTime;
   elementTimeElapsed.innerHTML = summary.timeElapsed;
-  elementMeanRTT.innerHTML = summary.meanRTT;
+  elementLatency.innerHTML = summary.latency;
   elementMinRTT.innerHTML = summary.minRTT;
   elementMaxRTT.innerHTML = summary.maxRTT;
   elementPacketLossRatio.innerHTML = summary.packetLossRatio;
