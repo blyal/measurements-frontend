@@ -261,11 +261,11 @@ const runTests = async () => {
     );
     const secondsRemainderElapsed =
       Math.round((testLocalEndTime - testLocalStartTime) / 1000) % 60;
-    const uplinkTrialsFailed = results.filter(
+    const uplinkTrialsFailedNumber = results.filter(
       (result) =>
         result.trialResult !== 'success' && result.trialType === 'uplink'
     ).length;
-    const downlinkTrialsFailed = results.filter(
+    const downlinkTrialsFailedNumber = results.filter(
       (result) =>
         result.trialResult !== 'success' && result.trialType === 'downlink'
     ).length;
@@ -276,44 +276,36 @@ const runTests = async () => {
       ICMPTrialsAttempted: 0,
       httpUpTrialsAttempted: uplinkResults(results).length,
       httpDownTrialsAttempted: downlinkResults(results).length,
-      failedHttpUpTrials: uplinkTrialsFailed,
-      failedHttpDownTrials: downlinkTrialsFailed,
+      failedHttpUpTrials: uplinkTrialsFailedNumber,
+      failedHttpDownTrials: downlinkTrialsFailedNumber,
       meanRTT: undefined,
       minRTT: undefined,
       maxRTT: undefined,
       packetLossRatio: undefined,
       meanSuccessHttpUpTime: calculateMeanHttpTime(
         uplinkResults(results),
-        uplinkTrialsFailed
+        uplinkTrialsFailedNumber
       ),
-      minSuccessHttpUpTime: uplinkResults(results).reduce((prev, curr) =>
-        prev.trialTimeInMs < curr.trialTimeInMs ? prev : curr
-      ).trialTimeInMs,
-      maxSuccessHttpUpTime: uplinkResults(results).reduce((prev, curr) =>
-        prev.trialTimeInMs > curr.trialTimeInMs ? prev : curr
-      ).trialTimeInMs,
+      minSuccessHttpUpTime: calculateMinHttpTime(uplinkResults(results)),
+      maxSuccessHttpUpTime: calculateMaxHttpTime(uplinkResults(results)),
       uplinkThroughput: calculateThroughputPercentage(
         uplinkResults(results),
         advertisedHttpDataRateInBitsPerMs
       ),
       uplinkUnsuccessfulFileAccess:
-        100 * (uplinkTrialsFailed / uplinkResults(results).length),
+        100 * (uplinkTrialsFailedNumber / uplinkResults(results).length),
       meanSuccessHttpDownTime: calculateMeanHttpTime(
         downlinkResults(results),
-        downlinkTrialsFailed
+        downlinkTrialsFailedNumber
       ),
-      minSuccessHttpDownTime: downlinkResults(results).reduce((prev, curr) =>
-        prev.trialTimeInMs < curr.trialTimeInMs ? prev : curr
-      ).trialTimeInMs,
-      maxSuccessHttpDownTime: downlinkResults(results).reduce((prev, curr) =>
-        prev.trialTimeInMs > curr.trialTimeInMs ? prev : curr
-      ).trialTimeInMs,
+      minSuccessHttpDownTime: calculateMinHttpTime(downlinkResults(results)),
+      maxSuccessHttpDownTime: calculateMaxHttpTime(downlinkResults(results)),
       downlinkThroughput: calculateThroughputPercentage(
         downlinkResults(results),
         advertisedHttpDataRateInBitsPerMs
       ),
       downlinkUnsuccessfulFileAccess:
-        100 * (downlinkTrialsFailed / downlinkResults(results).length),
+        100 * (downlinkTrialsFailedNumber / downlinkResults(results).length),
     };
     console.log(testSummary);
     updateTestStatus('Completed');
@@ -364,7 +356,28 @@ function calculateMeanHttpTime(results, failedTrials) {
       totalHttpTime += results[i].trialTimeInMs;
     }
   }
+  if (results.length - failedTrials === 0) return 0;
   return Math.round(totalHttpTime / (results.length - failedTrials));
+}
+
+function calculateMinHttpTime(results) {
+  const successfulResults = results.filter(
+    (result) => result.trialResult === 'success'
+  );
+  if (successfulResults.length === 0) return 0;
+  return successfulResults.reduce((prev, curr) =>
+    prev.trialTimeInMs < curr.trialTimeInMs ? prev : curr
+  ).trialTimeInMs;
+}
+
+function calculateMaxHttpTime(results) {
+  const successfulResults = results.filter(
+    (result) => result.trialResult === 'success'
+  );
+  if (successfulResults.length === 0) return 0;
+  return successfulResults.reduce((prev, curr) =>
+    prev.trialTimeInMs > curr.trialTimeInMs ? prev : curr
+  ).trialTimeInMs;
 }
 
 function calculateThroughputPercentage(
