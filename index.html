@@ -17,7 +17,15 @@
       <article class="tool">
         <div class="tool-header">
           <h3>ICMP Ping | File Download over HTTP/TCP</h3>
-          <p class="tool-status">Status: <span id="status">Idle</span></p>
+          <p class="status">Tool Status: <span id="tool-status">Idle</span></p>
+          <p class="status">
+            ICMP Local Server: <span id="icmp-status">Unknown</span>
+          </p>
+          <div class="icmp-button-container">
+            <button class="button yellow-button" id="icmpTestButton">
+              Test ICMP Server
+            </button>
+          </div>
         </div>
         <div class="tool-body">
           <div class="tool-body-child">
@@ -172,7 +180,7 @@
               <input id="csv-path" type="text" />
             </div>
             <div class="csv-export-container button-container">
-              <button class="button">Append to CSV</button>
+              <button class="button yellow-button">Append to CSV</button>
             </div>
           </div>
         </div>

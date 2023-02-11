@@ -72,9 +72,14 @@ p {
   margin-bottom: 30px;
 }
 
-.tool-status {
+.status {
   opacity: 50%;
   font-size: 20px;
+  margin-bottom: 10px;
+}
+
+.icmp-button-container {
+  margin: 30px auto;
 }
 
 .tool-body {
@@ -144,6 +149,20 @@ p {
   background-color: #003366;
 }
 
+.yellow-button {
+  background-color: #ffce31;
+  color: #002346;
+}
+
+.yellow-button:hover {
+  background-color: #ecc02e;
+}
+
+.yellow-button:active {
+  color: white;
+  background-color: #ffce31;
+}
+
 .removed {
   display: none;
 }
@@ -175,20 +194,6 @@ p {
 
 .csv-export-container {
   margin: 15px;
-}
-
-.csv-export-container .button {
-  background-color: #ffce31;
-  color: #002346;
-}
-
-.csv-export-container .button:hover {
-  background-color: #ecc02e;
-}
-
-.csv-export-container .button:active {
-  color: white;
-  background-color: #ffce31;
 }
 
 .pop-up {

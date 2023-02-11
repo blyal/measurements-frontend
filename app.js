@@ -1,7 +1,9 @@
 //TODO: how to ensure that only one TCP connection is used?
 
 // HTML Elements
-const testStatusElement = document.getElementById('status');
+const toolStatusElement = document.getElementById('tool-status');
+const icmpStatusElement = document.getElementById('icmp-status');
+const icmpButton = document.getElementById('icmpTestButton');
 const testLabelInput = document.getElementById('testLabel');
 const remoteEndpointInput = document.getElementById('remoteEndpoint');
 const advertisedDataRateInput = document.getElementById('httpAdvertisedRate');
@@ -69,7 +71,7 @@ downloadFile();
 // Update State
 const updateTestStatus = (newStatus) => {
   testStatus = newStatus;
-  testStatusElement.innerHTML = newStatus;
+  toolStatusElement.innerHTML = newStatus;
   if (newStatus === 'Completed') {
     loadingDotsContainer.classList.add('hidden');
     runTestsButtonText.classList.remove('hidden');
@@ -325,8 +327,27 @@ const runTests = async () => {
   }
 };
 
+async function testICMPServer() {
+  try {
+    const response = await fetch('http://localhost:1010/test', {
+      method: 'GET',
+    });
+    const testStatus = response.status;
+    console.log(testStatus);
+    if (testStatus === 200) {
+      icmpStatusElement.innerHTML = 'Running';
+    } else {
+      icmpStatusElement.innerHTML = 'Not Running';
+    }
+  } catch (error) {
+    console.error(error);
+    icmpStatusElement.innerHTML = 'Not Running';
+  }
+}
+
 // HTML Event Handlers
 button.addEventListener('click', runTests);
+icmpButton.addEventListener('click', testICMPServer);
 
 // helper functions
 const timeElapsed = (minutesElapsed, secondsElapsed) => {
