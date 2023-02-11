@@ -292,8 +292,10 @@ const runTests = async () => {
         uplinkResults(results),
         advertisedHttpDataRateInBitsPerMs
       ),
-      uplinkUnsuccessfulFileAccess:
-        100 * (uplinkTrialsFailedNumber / uplinkResults(results).length),
+      uplinkUnsuccessfulFileAccess: calculateUnsuccessfulFileAccessRatio(
+        uplinkTrialsFailedNumber,
+        uplinkResults(results).length
+      ),
       meanSuccessHttpDownTime: calculateMeanHttpTime(
         downlinkResults(results),
         downlinkTrialsFailedNumber
@@ -304,8 +306,10 @@ const runTests = async () => {
         downlinkResults(results),
         advertisedHttpDataRateInBitsPerMs
       ),
-      downlinkUnsuccessfulFileAccess:
-        100 * (downlinkTrialsFailedNumber / downlinkResults(results).length),
+      downlinkUnsuccessfulFileAccess: calculateUnsuccessfulFileAccessRatio(
+        downlinkTrialsFailedNumber,
+        downlinkResults(results).length
+      ),
     };
     console.log(testSummary);
     updateTestStatus('Completed');
@@ -394,6 +398,11 @@ function calculateThroughputPercentage(
     );
   }).length;
   return 100 * (prolongedTrials / successfulResults.length);
+}
+
+function calculateUnsuccessfulFileAccessRatio(failedNumber, resultsLength) {
+  if (resultsLength === 0) return '-';
+  return 100 * (failedNumber / resultsLength);
 }
 
 const updateHTMLAfterTestFinished = (summary) => {
