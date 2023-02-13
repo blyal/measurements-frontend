@@ -88,7 +88,6 @@ async function testICMPServer() {
       method: 'GET',
     });
     const testStatus = response.status;
-    console.log(testStatus);
     if (testStatus === 200) {
       icmpStatusElement.classList.add('bold');
       icmpStatusElement.classList.add('green');
@@ -150,7 +149,6 @@ async function downloadFile(remoteEndpoint = 'http://localhost:1414', signal) {
       signal,
     });
     const data = await response.blob();
-    console.log('File retrieved: ', data);
     if (data.size === fileSizeInBytes && !Boolean(signal)) {
       fileBlob = data;
     } else if (data.size !== fileSizeInBytes) {
@@ -175,12 +173,6 @@ async function downlinkTrial(remoteEndpoint) {
   try {
     const trial = await downloadFile(remoteEndpoint, signal);
     const endTime = performance.now();
-    if (trial.status === 200) {
-      console.log(
-        'File successfully downloaded from server \n Data: ',
-        trial.data
-      );
-    }
     return {
       trialTimeInMs: endTime - startTime,
       trialResult: trial.status === 200 ? 'success' : 'error',
@@ -213,12 +205,6 @@ const uplinkTrial = async (remoteEndpoint) => {
   })
     .then((response) => {
       const endTime = performance.now();
-      if (response.status === 200) {
-        console.log(
-          'File successfully received by server \n Response: ',
-          response
-        );
-      }
       return {
         trialTimeInMs: endTime - startTime,
         trialResult: response.status === 200 ? 'success' : 'error',
@@ -407,7 +393,6 @@ const runTests = async () => {
         downlinkResults(httpResults).length
       ),
     };
-    console.log(testSummary);
     updateTestStatus('Completed');
     updateHTMLAfterTestFinished(testSummary);
   }
