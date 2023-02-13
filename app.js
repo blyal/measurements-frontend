@@ -412,7 +412,7 @@ const timeElapsed = (minutesElapsed, secondsElapsed) => {
     if (secondsElapsed === 0) {
       timeElapsedStatement += ' precisely';
     } else {
-      timeElapsedStatement += `and ${secondsElapsed} second`;
+      timeElapsedStatement += ` and ${secondsElapsed} second`;
       if (secondsElapsed > 1) timeElapsedStatement += 's';
     }
   } else {
