@@ -10,10 +10,14 @@ const advertisedDataRateInput = document.getElementById('httpAdvertisedRate');
 const icmpTrialsQuantityInput = document.getElementById('icmpTrialsQuant');
 const httpTrialsQuantityInput = document.getElementById('httpTrialsQuant');
 const runTimeoutInput = document.getElementById('testsTimeout');
-const button = document.getElementById('testButton');
+const runTestsButton = document.getElementById('testButton');
+const resetButton = document.getElementById('resetButton');
+const proceedRefreshButton = document.getElementById('proceedRefresh');
+const cancelRefreshButton = document.getElementById('cancelRefresh');
 const runTestsButtonText = document.getElementById('runTestsText');
 const loadingDotsContainer = document.getElementsByClassName('loading')[0];
 const resultsElements = document.getElementsByClassName('results');
+const elementResultsLabel = document.getElementById('elementResultsLabel');
 const elementICMPTrialsAttempted = document.getElementById(
   'elementICMPTrialsAttempted'
 );
@@ -60,6 +64,7 @@ const elementDownThroughput = document.getElementById('elementDownThroughput');
 const elementDownUnsuccessfulFileAccess = document.getElementById(
   'elementDownUnsuccessfulFileAccess'
 );
+const elementPopUp = document.getElementsByClassName('pop-up')[0];
 
 // State
 const fileSizeInBytes = 513024;
@@ -79,6 +84,8 @@ const updateTestStatus = (newStatus) => {
   if (newStatus === 'Completed') {
     loadingDotsContainer.classList.add('hidden');
     runTestsButtonText.classList.remove('hidden');
+    runTestsButton.classList.add('removed');
+    resetButton.classList.remove('removed');
   }
 };
 
@@ -141,7 +148,7 @@ async function getICMPTestResults() {
 }
 
 // Download File
-//TODO: change default remote endpoint for getting the file (also in HTML)
+//TODO: change default remote endpoint for getting the file (also in reset function and in HTML)
 async function downloadFile(remoteEndpoint = 'http://localhost:1414', signal) {
   try {
     const response = await fetch(`${remoteEndpoint}/${downlinkFilePath}`, {
@@ -485,6 +492,7 @@ function calculateUnsuccessfulTrialRatio(failedTrialsNumber, resultsLength) {
 }
 
 const updateHTMLAfterTestFinished = (summary) => {
+  elementResultsLabel.innerHTML = testLabelInput.value;
   elementICMPTrialsAttempted.innerHTML = summary.ICMPTrialsAttempted;
   elementHttpUpTrialsAttempted.innerHTML = summary.httpUpTrialsAttempted;
   elementHttpDownTrialsAttempted.innerHTML = summary.httpDownTrialsAttempted;
@@ -514,6 +522,53 @@ const updateHTMLAfterTestFinished = (summary) => {
   resultsElements[1].classList.remove('removed');
 };
 
+// Reset Tool
+function resetTool() {
+  elementPopUp.classList.add('removed');
+  updateTestStatus('Idle');
+  runTestsButton.classList.remove('removed');
+  resetButton.classList.add('removed');
+  testLabelInput.value = '';
+  //TODO: change this default value
+  remoteEndpointInput.value = 'http://localhost:1414';
+  advertisedDataRateInput.value = '';
+  icmpTrialsQuantityInput.value = 100;
+  httpTrialsQuantityInput.value = 100;
+  runTimeoutInput.value = 1;
+  resultsElements[0].classList.add('removed');
+  resultsElements[1].classList.add('removed');
+  elementResultsLabel.innerHTML = '';
+  elementICMPTrialsAttempted.innerHTML = 0;
+  elementHttpUpTrialsAttempted.innerHTML = 0;
+  elementHttpDownTrialsAttempted.innerHTML = 0;
+  elementICMPTrialsSuccessful.innerHTML = 0;
+  elementHttpUpTrialsSuccessful.innerHTML = 0;
+  elementHttpDownTrialsSuccessful.innerHTML = 0;
+  elementTestStartTime.innerHTML = 'Error';
+  elementTimeElapsed.innerHTML = 'Error';
+  elementLatency.innerHTML = '-';
+  elementMinRTT.innerHTML = '-';
+  elementMaxRTT.innerHTML = '-';
+  elementPacketLossRatio.innerHTML = '-';
+  elementMeanUpHttpTime.innerHTML = '-';
+  elementMinUpHttpTime.innerHTML = '-';
+  elementMaxUpHttpTime.innerHTML = '-';
+  elementUpThroughput.innerHTML = '-';
+  elementUpUnsuccessfulFileAccess.innerHTML = '-';
+  elementMeanDownHttpTime.innerHTML = '-';
+  elementMinDownHttpTime.innerHTML = '-';
+  elementMaxDownHttpTime.innerHTML = '-';
+  elementDownThroughput.innerHTML = '-';
+  elementDownUnsuccessfulFileAccess.innerHTML = '-';
+}
+
 // HTML Event Handlers
-button.addEventListener('click', runTests);
+runTestsButton.addEventListener('click', runTests);
+resetButton.addEventListener('click', () =>
+  elementPopUp.classList.remove('removed')
+);
+proceedRefreshButton.addEventListener('click', resetTool);
+cancelRefreshButton.addEventListener('click', () =>
+  elementPopUp.classList.add('removed')
+);
 icmpButton.addEventListener('click', testICMPServer);
