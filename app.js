@@ -79,9 +79,10 @@ const updateTestStatus = (newStatus) => {
 };
 
 // Download File
-async function downloadFile(signal) {
+//TODO: change default remote endpoint for getting the file (also in HTML)
+async function downloadFile(remoteEndpoint = 'http://localhost:1414', signal) {
   try {
-    const response = await fetch(downlinkFilePath, {
+    const response = await fetch(`${remoteEndpoint}/${downlinkFilePath}`, {
       method: 'GET',
       signal,
     });
@@ -99,7 +100,7 @@ async function downloadFile(signal) {
 }
 
 // Downlink Trial
-async function downlinkTrial() {
+async function downlinkTrial(remoteEndpoint) {
   const controller = new AbortController();
   const signal = controller.signal;
   const startTime = performance.now();
@@ -109,7 +110,7 @@ async function downlinkTrial() {
   }, 120000);
 
   try {
-    const trial = await downloadFile(signal);
+    const trial = await downloadFile(remoteEndpoint, signal);
     const endTime = performance.now();
     if (trial.status === 200) {
       console.log(
@@ -133,7 +134,7 @@ async function downlinkTrial() {
 }
 
 // Uplink Trial
-const uplinkTrial = async () => {
+const uplinkTrial = async (remoteEndpoint) => {
   const controller = new AbortController();
   const signal = controller.signal;
   const startTime = performance.now();
@@ -142,7 +143,7 @@ const uplinkTrial = async () => {
     controller.abort();
   }, 120000);
 
-  return fetch('http://localhost:1414/uplink', {
+  return fetch(`${remoteEndpoint}/uplink`, {
     method: 'POST',
     body: fileBlob,
     signal,
@@ -213,9 +214,6 @@ const runTests = async () => {
       +advertisedDataRateInput.value;
     const advertisedHttpDataRateInBitsPerMs =
       advertisedHttpDataRateInMegabitsPerSec * 1000000 * 1000;
-    // const maximumTrialTimeInMsReAdvertisedHttpRate =
-    //   fileSizeInBytes / advertisedHttpDataRateInBpms;
-    //TODO: do something with this remote endpoint
     const remoteEndpoint = remoteEndpointInput.value;
     const results = [];
 
@@ -228,10 +226,14 @@ const runTests = async () => {
       isRunning = false;
     }, runTimeoutInMs);
 
-    // loop for sending the calls
+    //TODO: call the localserver to conduct the ICMP trials
+
+    // loop for sending the HTTP calls
     for (let i = 0; i < numberOfHttpTrials; i++) {
       if (i % 2 === 1) {
-        const { trialTimeInMs, trialResult } = await uplinkTrial();
+        const { trialTimeInMs, trialResult } = await uplinkTrial(
+          remoteEndpoint
+        );
         const trialData = {
           testUTCStartTime,
           testLabel,
@@ -245,7 +247,9 @@ const runTests = async () => {
           break;
         }
       } else {
-        const { trialTimeInMs, trialResult } = await downlinkTrial();
+        const { trialTimeInMs, trialResult } = await downlinkTrial(
+          remoteEndpoint
+        );
         const trialData = {
           testUTCStartTime,
           testLabel,
