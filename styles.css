@@ -171,6 +171,18 @@ p {
   visibility: hidden;
 }
 
+.bold {
+  font-weight: bold;
+}
+
+.green {
+  color: green;
+}
+
+.red {
+  color: #ff3300;
+}
+
 .results-drilldown {
   width: 70%;
   margin: 0 auto;

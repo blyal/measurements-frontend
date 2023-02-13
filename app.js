@@ -335,12 +335,21 @@ async function testICMPServer() {
     const testStatus = response.status;
     console.log(testStatus);
     if (testStatus === 200) {
+      icmpStatusElement.classList.add('bold');
+      icmpStatusElement.classList.add('green');
+      icmpStatusElement.classList.remove('red');
       icmpStatusElement.innerHTML = 'Running';
     } else {
+      icmpStatusElement.classList.add('bold');
+      icmpStatusElement.classList.add('red');
+      icmpStatusElement.classList.remove('green');
       icmpStatusElement.innerHTML = 'Not Running';
     }
   } catch (error) {
     console.error(error);
+    icmpStatusElement.classList.add('bold');
+    icmpStatusElement.classList.add('red');
+    icmpStatusElement.classList.remove('green');
     icmpStatusElement.innerHTML = 'Not Running';
   }
 }
