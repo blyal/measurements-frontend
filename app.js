@@ -82,8 +82,35 @@ const updateTestStatus = (newStatus) => {
   }
 };
 
+async function testICMPServer() {
+  try {
+    const response = await fetch(`${localICMPServer}/test`, {
+      method: 'GET',
+    });
+    const testStatus = response.status;
+    console.log(testStatus);
+    if (testStatus === 200) {
+      icmpStatusElement.classList.add('bold');
+      icmpStatusElement.classList.add('green');
+      icmpStatusElement.classList.remove('red');
+      icmpStatusElement.innerHTML = 'Running';
+    } else {
+      icmpStatusElement.classList.add('bold');
+      icmpStatusElement.classList.add('red');
+      icmpStatusElement.classList.remove('green');
+      icmpStatusElement.innerHTML = 'Not Running';
+    }
+  } catch (error) {
+    console.error(error);
+    icmpStatusElement.classList.add('bold');
+    icmpStatusElement.classList.add('red');
+    icmpStatusElement.classList.remove('green');
+    icmpStatusElement.innerHTML = 'Not Running';
+  }
+}
+
 //TODO: error handling
-// start ICMP trials
+// Start ICMP trials
 function runICMPTest(numberOfTrials, remoteEndpointForTest) {
   let body = JSON.stringify({
     numberOfTrials,
@@ -102,7 +129,7 @@ function runICMPTest(numberOfTrials, remoteEndpointForTest) {
   }
 }
 
-// get ICMP trial results
+// Get ICMP Trial Results
 async function getICMPTestResults() {
   try {
     const response = await fetch(`${localICMPServer}/get-ping-test-results`, {
@@ -208,6 +235,7 @@ const uplinkTrial = async (remoteEndpoint) => {
     });
 };
 
+// Main Test Function
 const runTests = async () => {
   if (
     !Boolean(testLabelInput.value) ||
@@ -385,38 +413,7 @@ const runTests = async () => {
   }
 };
 
-async function testICMPServer() {
-  try {
-    const response = await fetch(`${localICMPServer}/test`, {
-      method: 'GET',
-    });
-    const testStatus = response.status;
-    console.log(testStatus);
-    if (testStatus === 200) {
-      icmpStatusElement.classList.add('bold');
-      icmpStatusElement.classList.add('green');
-      icmpStatusElement.classList.remove('red');
-      icmpStatusElement.innerHTML = 'Running';
-    } else {
-      icmpStatusElement.classList.add('bold');
-      icmpStatusElement.classList.add('red');
-      icmpStatusElement.classList.remove('green');
-      icmpStatusElement.innerHTML = 'Not Running';
-    }
-  } catch (error) {
-    console.error(error);
-    icmpStatusElement.classList.add('bold');
-    icmpStatusElement.classList.add('red');
-    icmpStatusElement.classList.remove('green');
-    icmpStatusElement.innerHTML = 'Not Running';
-  }
-}
-
-// HTML Event Handlers
-button.addEventListener('click', runTests);
-icmpButton.addEventListener('click', testICMPServer);
-
-// helper functions
+// Helper Functions
 const timeElapsed = (minutesElapsed, secondsElapsed) => {
   if (minutesElapsed === 0 && secondsElapsed === 0) {
     return 'There was an error with the test';
@@ -531,3 +528,7 @@ const updateHTMLAfterTestFinished = (summary) => {
   resultsElements[0].classList.remove('removed');
   resultsElements[1].classList.remove('removed');
 };
+
+// HTML Event Handlers
+button.addEventListener('click', runTests);
+icmpButton.addEventListener('click', testICMPServer);
