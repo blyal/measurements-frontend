@@ -61,6 +61,7 @@ const elementDownUnsuccessfulFileAccess = document.getElementById(
 // State
 const fileSizeInBytes = 513024;
 const fileSizeInBits = 4104192;
+const localICMPServer = 'http://localhost:1010';
 const downlinkFilePath = './get-file';
 let fileBlob;
 let testStatus = 'Idle';
@@ -77,6 +78,20 @@ const updateTestStatus = (newStatus) => {
     runTestsButtonText.classList.remove('hidden');
   }
 };
+
+//TODO: error handling
+// start ICMP trials
+function runICMPTest() {
+  try {
+    fetch(`${localICMPServer}/start-ping-test`, {
+      method: 'POST',
+    });
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+//TODO: get ICMP trial results
 
 // Download File
 //TODO: change default remote endpoint for getting the file (also in HTML)
@@ -226,7 +241,8 @@ const runTests = async () => {
       isRunning = false;
     }, runTimeoutInMs);
 
-    //TODO: call the localserver to conduct the ICMP trials
+    // call the localserver to conduct the ICMP trials
+    runICMPTest();
 
     // loop for sending the HTTP calls
     for (let i = 0; i < numberOfHttpTrials; i++) {
@@ -333,7 +349,7 @@ const runTests = async () => {
 
 async function testICMPServer() {
   try {
-    const response = await fetch('http://localhost:1010/test', {
+    const response = await fetch(`${localICMPServer}/test`, {
       method: 'GET',
     });
     const testStatus = response.status;
