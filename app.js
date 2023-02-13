@@ -23,6 +23,9 @@ const elementHttpUpTrialsAttempted = document.getElementById(
 const elementHttpDownTrialsAttempted = document.getElementById(
   'elementHttpDownTrialsAttempted'
 );
+const elementICMPTrialsSuccessful = document.getElementById(
+  'elementICMPTrialsSuccessful'
+);
 const elementHttpUpTrialsSuccessful = document.getElementById(
   'elementHttpUpTrialsSuccessful'
 );
@@ -81,17 +84,35 @@ const updateTestStatus = (newStatus) => {
 
 //TODO: error handling
 // start ICMP trials
-function runICMPTest() {
+function runICMPTest(numberOfTrials, remoteEndpointForTest) {
+  let body = JSON.stringify({
+    numberOfTrials,
+    remoteEndpointForTest,
+  });
   try {
     fetch(`${localICMPServer}/start-ping-test`, {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body,
     });
   } catch (error) {
     console.error(error);
   }
 }
 
-//TODO: get ICMP trial results
+// get ICMP trial results
+async function getICMPTestResults() {
+  try {
+    const response = await fetch(`${localICMPServer}/get-ping-test-results`, {
+      method: 'GET',
+    });
+    return await response.json();
+  } catch (error) {
+    console.error(error);
+  }
+}
 
 // Download File
 //TODO: change default remote endpoint for getting the file (also in HTML)
@@ -230,22 +251,26 @@ const runTests = async () => {
     const advertisedHttpDataRateInBitsPerMs =
       advertisedHttpDataRateInMegabitsPerSec * 1000000 * 1000;
     const remoteEndpoint = remoteEndpointInput.value;
-    const results = [];
+    let icmpResults;
+    const httpResults = [];
 
     // data config
     const testUTCStartTime = new Date().toUTCString();
     const testLabel = testLabelInput.value;
 
     // run timeout
-    setTimeout(() => {
+    const timeout = setTimeout(() => {
       isRunning = false;
     }, runTimeoutInMs);
 
     // call the localserver to conduct the ICMP trials
-    runICMPTest();
+    runICMPTest(numberOfIcmpTrials, remoteEndpoint);
 
     // loop for sending the HTTP calls
     for (let i = 0; i < numberOfHttpTrials; i++) {
+      if (!isRunning) {
+        break;
+      }
       if (i % 2 === 1) {
         const { trialTimeInMs, trialResult } = await uplinkTrial(
           remoteEndpoint
@@ -258,10 +283,7 @@ const runTests = async () => {
           trialTimeInMs: Math.round(trialTimeInMs),
           trialType: 'uplink',
         };
-        results.push(trialData);
-        if (!isRunning) {
-          break;
-        }
+        httpResults.push(trialData);
       } else {
         const { trialTimeInMs, trialResult } = await downlinkTrial(
           remoteEndpoint
@@ -274,26 +296,33 @@ const runTests = async () => {
           trialTimeInMs: Math.round(trialTimeInMs),
           trialType: 'downlink',
         };
-        results.push(trialData);
-        if (!isRunning) {
-          break;
-        }
+        httpResults.push(trialData);
       }
     }
 
     // handle results
-    console.log(results);
+    async function callbackICMP() {
+      let icmpData = await getICMPTestResults();
+      icmpResults = icmpData.pingTestResults;
+      if (isRunning && icmpResults.length !== numberOfIcmpTrials) {
+        await callbackICMP();
+      }
+    }
+    await callbackICMP();
+    clearTimeout(timeout);
+    console.log(httpResults);
+    console.log(icmpResults);
     const testLocalEndTime = new Date();
     const minutesElapsed = Math.round(
       (testLocalEndTime - testLocalStartTime) / 60000
     );
     const secondsRemainderElapsed =
       Math.round((testLocalEndTime - testLocalStartTime) / 1000) % 60;
-    const uplinkTrialsFailedNumber = results.filter(
+    const uplinkTrialsFailedNumber = httpResults.filter(
       (result) =>
         result.trialResult !== 'success' && result.trialType === 'uplink'
     ).length;
-    const downlinkTrialsFailedNumber = results.filter(
+    const downlinkTrialsFailedNumber = httpResults.filter(
       (result) =>
         result.trialResult !== 'success' && result.trialType === 'downlink'
     ).length;
@@ -301,44 +330,53 @@ const runTests = async () => {
     let testSummary = {
       testLocalStartTime: testLocalStartTime.toLocaleString(),
       timeElapsed: timeElapsed(minutesElapsed, secondsRemainderElapsed),
-      ICMPTrialsAttempted: 0,
-      httpUpTrialsAttempted: uplinkResults(results).length,
-      httpDownTrialsAttempted: downlinkResults(results).length,
-      succeedfulHttpUpTrials:
-        uplinkResults(results).length - uplinkTrialsFailedNumber,
-      succeedfulHttpDownTrials:
-        downlinkResults(results).length - downlinkTrialsFailedNumber,
-      latency: undefined,
-      minRTT: undefined,
-      maxRTT: undefined,
-      packetLossRatio: undefined,
-      meanSuccessHttpUpTime: calculateMeanHttpTime(
-        uplinkResults(results),
+      ICMPTrialsAttempted: icmpResults.length,
+      httpUpTrialsAttempted: uplinkResults(httpResults).length,
+      httpDownTrialsAttempted: downlinkResults(httpResults).length,
+      successfulICMPTrials: icmpResults.filter(
+        (result) => result.trialResult === 'success'
+      ).length,
+      successfulHttpUpTrials:
+        uplinkResults(httpResults).length - uplinkTrialsFailedNumber,
+      successfulHttpDownTrials:
+        downlinkResults(httpResults).length - downlinkTrialsFailedNumber,
+      latency: calculateMeanTime(
+        icmpResults,
+        icmpResults.filter((result) => result.trialResult !== 'success').length
+      ),
+      minRTT: Math.round(calculateMinTime(icmpResults)),
+      maxRTT: Math.round(calculateMaxTime(icmpResults)),
+      packetLossRatio: calculateUnsuccessfulTrialRatio(
+        icmpResults.filter((result) => result.trialResult !== 'success').length,
+        icmpResults.length
+      ),
+      meanSuccessHttpUpTime: calculateMeanTime(
+        uplinkResults(httpResults),
         uplinkTrialsFailedNumber
       ),
-      minSuccessHttpUpTime: calculateMinHttpTime(uplinkResults(results)),
-      maxSuccessHttpUpTime: calculateMaxHttpTime(uplinkResults(results)),
+      minSuccessHttpUpTime: calculateMinTime(uplinkResults(httpResults)),
+      maxSuccessHttpUpTime: calculateMaxTime(uplinkResults(httpResults)),
       uplinkThroughput: calculateThroughputPercentage(
-        uplinkResults(results),
+        uplinkResults(httpResults),
         advertisedHttpDataRateInBitsPerMs
       ),
-      uplinkUnsuccessfulFileAccess: calculateUnsuccessfulFileAccessRatio(
+      uplinkUnsuccessfulFileAccess: calculateUnsuccessfulTrialRatio(
         uplinkTrialsFailedNumber,
-        uplinkResults(results).length
+        uplinkResults(httpResults).length
       ),
-      meanSuccessHttpDownTime: calculateMeanHttpTime(
-        downlinkResults(results),
+      meanSuccessHttpDownTime: calculateMeanTime(
+        downlinkResults(httpResults),
         downlinkTrialsFailedNumber
       ),
-      minSuccessHttpDownTime: calculateMinHttpTime(downlinkResults(results)),
-      maxSuccessHttpDownTime: calculateMaxHttpTime(downlinkResults(results)),
+      minSuccessHttpDownTime: calculateMinTime(downlinkResults(httpResults)),
+      maxSuccessHttpDownTime: calculateMaxTime(downlinkResults(httpResults)),
       downlinkThroughput: calculateThroughputPercentage(
-        downlinkResults(results),
+        downlinkResults(httpResults),
         advertisedHttpDataRateInBitsPerMs
       ),
-      downlinkUnsuccessfulFileAccess: calculateUnsuccessfulFileAccessRatio(
+      downlinkUnsuccessfulFileAccess: calculateUnsuccessfulTrialRatio(
         downlinkTrialsFailedNumber,
-        downlinkResults(results).length
+        downlinkResults(httpResults).length
       ),
     };
     console.log(testSummary);
@@ -406,23 +444,24 @@ function filterByTypeOfTrial(trial, trialTypeToFilterFor) {
   return trial.trialType === trialTypeToFilterFor;
 }
 
-const uplinkResults = (results) =>
-  results.filter((result) => filterByTypeOfTrial(result, 'uplink'));
-const downlinkResults = (results) =>
-  results.filter((result) => filterByTypeOfTrial(result, 'downlink'));
+const uplinkResults = (httpResults) =>
+  httpResults.filter((result) => filterByTypeOfTrial(result, 'uplink'));
+const downlinkResults = (httpResults) =>
+  httpResults.filter((result) => filterByTypeOfTrial(result, 'downlink'));
 
-function calculateMeanHttpTime(results, failedTrials) {
-  let totalHttpTime = 0;
+function calculateMeanTime(results, failedTrialsNumber) {
+  let totalTime = 0;
   for (let i = 0; i < results.length; i++) {
     if (results[i].trialResult === 'success') {
-      totalHttpTime += results[i].trialTimeInMs;
+      totalTime += results[i].trialTimeInMs;
     }
   }
-  if (results.length - failedTrials === 0) return '-';
-  return Math.round(totalHttpTime / (results.length - failedTrials));
+
+  if (results.length - failedTrialsNumber === 0) return '-';
+  return Math.round(totalTime / (results.length - failedTrialsNumber));
 }
 
-function calculateMinHttpTime(results) {
+function calculateMinTime(results) {
   const successfulResults = results.filter(
     (result) => result.trialResult === 'success'
   );
@@ -432,7 +471,7 @@ function calculateMinHttpTime(results) {
   ).trialTimeInMs;
 }
 
-function calculateMaxHttpTime(results) {
+function calculateMaxTime(results) {
   const successfulResults = results.filter(
     (result) => result.trialResult === 'success'
   );
@@ -443,10 +482,10 @@ function calculateMaxHttpTime(results) {
 }
 
 function calculateThroughputPercentage(
-  results,
+  httpResults,
   advertisedHttpDataRateInBitsPerMs
 ) {
-  const successfulResults = results.filter(
+  const successfulResults = httpResults.filter(
     (result) => result.trialResult === 'success'
   );
   if (successfulResults.length === 0) return '-';
@@ -458,17 +497,18 @@ function calculateThroughputPercentage(
   return 100 * (prolongedTrials / successfulResults.length);
 }
 
-function calculateUnsuccessfulFileAccessRatio(failedNumber, resultsLength) {
+function calculateUnsuccessfulTrialRatio(failedTrialsNumber, resultsLength) {
   if (resultsLength === 0) return '-';
-  return 100 * (failedNumber / resultsLength);
+  return 100 * (failedTrialsNumber / resultsLength);
 }
 
 const updateHTMLAfterTestFinished = (summary) => {
   elementICMPTrialsAttempted.innerHTML = summary.ICMPTrialsAttempted;
   elementHttpUpTrialsAttempted.innerHTML = summary.httpUpTrialsAttempted;
   elementHttpDownTrialsAttempted.innerHTML = summary.httpDownTrialsAttempted;
-  elementHttpUpTrialsSuccessful.innerHTML = summary.succeedfulHttpUpTrials;
-  elementHttpDownTrialsSuccessful.innerHTML = summary.succeedfulHttpDownTrials;
+  elementICMPTrialsSuccessful.innerHTML = summary.successfulICMPTrials;
+  elementHttpUpTrialsSuccessful.innerHTML = summary.successfulHttpUpTrials;
+  elementHttpDownTrialsSuccessful.innerHTML = summary.successfulHttpDownTrials;
 
   elementTestStartTime.innerHTML = summary.testLocalStartTime;
   elementTimeElapsed.innerHTML = summary.timeElapsed;
