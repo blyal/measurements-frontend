@@ -27,7 +27,7 @@ h2 {
 }
 
 h3 {
-  color: #ffce31;
+  color: #003366;
   font-size: 22.5px;
   margin: 0 auto 15px;
 }
@@ -50,6 +50,15 @@ h6 {
 
 p {
   margin: 0;
+}
+
+.download-section {
+  margin: 20px;
+}
+
+.download-explanation-container {
+  color: #003366;
+  margin: 10px;
 }
 
 .main {

@@ -13,6 +13,15 @@
       </div>
     </header>
 
+    <section class="download-section">
+      <div class="button-container">
+        <button class="button" id="downloadButton">Download Test Data</button>
+      </div>
+      <div class="download-explanation-container">
+        <p>Download the CSV file containing current test data to date</p>
+      </div>
+    </section>
+
     <section class="main">
       <article class="tool">
         <div class="tool-header">
@@ -179,14 +188,16 @@
             </div>
           </div>
           <div class="tool-footer results removed">
-            <div>
+            <!-- <div>
               <div class="label-wrapper">
                 <label for="csv-path">CSV File Path:</label>
               </div>
               <input id="csv-path" type="text" />
-            </div>
+            </div> -->
             <div class="csv-export-container button-container">
-              <button class="button yellow-button">Append to CSV</button>
+              <button class="button yellow-button" id="appendToCsv">
+                Append to CSV
+              </button>
             </div>
           </div>
         </div>

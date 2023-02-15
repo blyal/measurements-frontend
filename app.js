@@ -1,6 +1,7 @@
 //TODO: how to ensure that only one TCP connection is used?
 
 // HTML Elements
+const downloadButton = document.getElementById('downloadButton');
 const toolStatusElement = document.getElementById('tool-status');
 const icmpStatusElement = document.getElementById('icmp-status');
 const icmpButton = document.getElementById('icmpTestButton');
@@ -64,15 +65,19 @@ const elementDownThroughput = document.getElementById('elementDownThroughput');
 const elementDownUnsuccessfulFileAccess = document.getElementById(
   'elementDownUnsuccessfulFileAccess'
 );
+const appendToCsvButton = document.getElementById('appendToCsv');
 const elementPopUp = document.getElementsByClassName('pop-up')[0];
 
 // State
 const fileSizeInBytes = 513024;
 const fileSizeInBits = 4104192;
+//TODO: primary server will change
+const primaryServer = 'http://localhost:1414';
 const localICMPServer = 'http://localhost:1010';
 const downlinkFilePath = './get-file';
 let fileBlob;
 let testStatus = 'Idle';
+let dataForSending;
 
 // Initialise State
 downloadFile();
@@ -88,6 +93,9 @@ const updateTestStatus = (newStatus) => {
     resetButton.classList.remove('removed');
   }
 };
+
+//TODO:
+async function downloadFile() {}
 
 async function testICMPServer() {
   try {
@@ -334,11 +342,10 @@ const runTests = async () => {
     console.log(httpResults);
     console.log(icmpResults);
     const testLocalEndTime = new Date();
-    const minutesElapsed = Math.round(
-      (testLocalEndTime - testLocalStartTime) / 60000
-    );
-    const secondsRemainderElapsed =
-      Math.round((testLocalEndTime - testLocalStartTime) / 1000) % 60;
+    const minutesElapsedUnrounded =
+      (testLocalEndTime - testLocalStartTime) / 60000;
+    const secondsRemainderElapsedUnrounded =
+      ((testLocalEndTime - testLocalStartTime) / 1000) % 60;
     const uplinkTrialsFailedNumber = httpResults.filter(
       (result) =>
         result.trialResult !== 'success' && result.trialType === 'uplink'
@@ -350,7 +357,10 @@ const runTests = async () => {
 
     let testSummary = {
       testLocalStartTime: testLocalStartTime.toLocaleString(),
-      timeElapsed: timeElapsed(minutesElapsed, secondsRemainderElapsed),
+      timeElapsed: timeElapsed(
+        minutesElapsedUnrounded,
+        secondsRemainderElapsedUnrounded
+      ),
       ICMPTrialsAttempted: icmpResults.length,
       httpUpTrialsAttempted: uplinkResults(httpResults).length,
       httpDownTrialsAttempted: downlinkResults(httpResults).length,
@@ -401,14 +411,39 @@ const runTests = async () => {
       ),
     };
     updateTestStatus('Completed');
+    dataForSending = {
+      ...testSummary,
+      testLabel,
+      remoteEndpoint,
+      advertisedDataRate: advertisedHttpDataRateInMegabitsPerSec,
+    };
     updateHTMLAfterTestFinished(testSummary);
   }
 };
 
+// Append Test Data to CSV
+async function appendDataToCsv() {
+  try {
+    fetch(`${primaryServer}/append-data`, {
+      method: 'POST',
+      body: JSON.stringify(dataForSending),
+    });
+  } catch (error) {
+    console.error(error);
+  }
+}
+
 // Helper Functions
-const timeElapsed = (minutesElapsed, secondsElapsed) => {
-  if (minutesElapsed === 0 && secondsElapsed === 0) {
+const timeElapsed = (minutesElapsedUnrounded, secondsElapsedUnrounded) => {
+  if (minutesElapsedUnrounded === 0 && secondsElapsedUnrounded === 0) {
     return 'There was an error with the test';
+  }
+
+  const minutesElapsed = Math.round(minutesElapsedUnrounded);
+  const secondsElapsed = Math.round(secondsElapsedUnrounded);
+
+  if (minutesElapsed === 0 && secondsElapsed === 0) {
+    return '<1 second';
   }
 
   let timeElapsedStatement;
@@ -526,6 +561,7 @@ const updateHTMLAfterTestFinished = (summary) => {
 function resetTool() {
   elementPopUp.classList.add('removed');
   updateTestStatus('Idle');
+  dataForSending = null;
   runTestsButton.classList.remove('removed');
   resetButton.classList.add('removed');
   testLabelInput.value = '';
@@ -563,6 +599,8 @@ function resetTool() {
 }
 
 // HTML Event Handlers
+downloadButton.addEventListener('click', () => {});
+icmpButton.addEventListener('click', testICMPServer);
 runTestsButton.addEventListener('click', runTests);
 resetButton.addEventListener('click', () =>
   elementPopUp.classList.remove('removed')
@@ -571,4 +609,4 @@ proceedRefreshButton.addEventListener('click', resetTool);
 cancelRefreshButton.addEventListener('click', () =>
   elementPopUp.classList.add('removed')
 );
-icmpButton.addEventListener('click', testICMPServer);
+appendToCsvButton.addEventListener('click', appendDataToCsv);
