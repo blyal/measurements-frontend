@@ -1,5 +1,3 @@
-//TODO: how to ensure that only one TCP connection is used?
-
 // HTML Elements
 const downloadButton = document.getElementById('downloadButton');
 const toolStatusElement = document.getElementById('tool-status');
@@ -78,9 +76,9 @@ let fileBlob;
 let testStatus = 'Idle';
 let dataForSending;
 
-// Initialise State
+// Initialise State and HTML
 downloadTestFile();
-console.log('primserver: ', primaryServer);
+remoteEndpointInput.value = primaryServer;
 
 // Update State
 const updateTestStatus = (newStatus) => {
@@ -94,7 +92,6 @@ const updateTestStatus = (newStatus) => {
   }
 };
 
-//TODO:
 async function downloadCsvFile() {
   try {
     const response = await fetch(`${primaryServer}/download-data`, {
@@ -174,10 +171,7 @@ async function getICMPTestResults() {
 
 // Download File
 //TODO: change default remote endpoint for getting the file (also in reset function and in HTML)
-async function downloadTestFile(
-  remoteEndpoint = 'http://localhost:1414',
-  signal
-) {
+async function downloadTestFile(remoteEndpoint = primaryServer, signal) {
   try {
     const response = await fetch(`${remoteEndpoint}/${downlinkFilePath}`, {
       method: 'GET',
@@ -585,8 +579,7 @@ function resetTool() {
   runTestsButton.classList.remove('removed');
   resetButton.classList.add('removed');
   testLabelInput.value = '';
-  //TODO: change this default value
-  remoteEndpointInput.value = 'http://localhost:1414';
+  remoteEndpointInput.value = primaryServer;
   advertisedDataRateInput.value = '';
   icmpTrialsQuantityInput.value = 100;
   httpTrialsQuantityInput.value = 100;
