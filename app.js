@@ -71,8 +71,7 @@ const elementPopUp = document.getElementsByClassName('pop-up')[0];
 // State
 const fileSizeInBytes = 513024;
 const fileSizeInBits = 4104192;
-//TODO: primary server will change
-const primaryServer = 'http://localhost:1414';
+const primaryServer = window.serverUrl;
 const localICMPServer = 'http://localhost:1010';
 const downlinkFilePath = './get-file';
 let fileBlob;
@@ -80,7 +79,8 @@ let testStatus = 'Idle';
 let dataForSending;
 
 // Initialise State
-downloadFile();
+downloadTestFile();
+console.log('primserver: ', primaryServer);
 
 // Update State
 const updateTestStatus = (newStatus) => {
@@ -95,9 +95,26 @@ const updateTestStatus = (newStatus) => {
 };
 
 //TODO:
-async function downloadFile() {}
+async function downloadCsvFile() {
+  try {
+    const response = await fetch(`${primaryServer}/download-data`, {
+      method: 'GET',
+    });
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'data.csv';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  } catch (error) {
+    console.error(error);
+  }
+}
 
 async function testICMPServer() {
+  console.log('testtt: ', primaryServer);
   try {
     const response = await fetch(`${localICMPServer}/test`, {
       method: 'GET',
@@ -157,7 +174,10 @@ async function getICMPTestResults() {
 
 // Download File
 //TODO: change default remote endpoint for getting the file (also in reset function and in HTML)
-async function downloadFile(remoteEndpoint = 'http://localhost:1414', signal) {
+async function downloadTestFile(
+  remoteEndpoint = 'http://localhost:1414',
+  signal
+) {
   try {
     const response = await fetch(`${remoteEndpoint}/${downlinkFilePath}`, {
       method: 'GET',
@@ -186,7 +206,7 @@ async function downlinkTrial(remoteEndpoint) {
   }, 120000);
 
   try {
-    const trial = await downloadFile(remoteEndpoint, signal);
+    const trial = await downloadTestFile(remoteEndpoint, signal);
     const endTime = performance.now();
     return {
       trialTimeInMs: endTime - startTime,
@@ -599,7 +619,7 @@ function resetTool() {
 }
 
 // HTML Event Handlers
-downloadButton.addEventListener('click', () => {});
+downloadButton.addEventListener('click', downloadCsvFile);
 icmpButton.addEventListener('click', testICMPServer);
 runTestsButton.addEventListener('click', runTests);
 resetButton.addEventListener('click', () =>
